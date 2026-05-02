@@ -6,7 +6,36 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		767B2CB52FA508CA00EB2B6B /* TrekFitWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 767B2CAB2FA508C900EB2B6B /* TrekFitWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		767B2CB32FA508CA00EB2B6B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 76B632742FA209030063D2A4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 767B2CAA2FA508C900EB2B6B;
+			remoteInfo = "TrekFitWatch Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		767B2CB92FA508CA00EB2B6B /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				767B2CB52FA508CA00EB2B6B /* TrekFitWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		767B2CAB2FA508C900EB2B6B /* TrekFitWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TrekFitWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		76B6327C2FA209030063D2A4 /* TrekFit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TrekFit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -21,6 +50,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		767B2CAC2FA508C900EB2B6B /* TrekFitWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "TrekFitWatch Watch App";
+			sourceTree = "<group>";
+		};
 		76B6327E2FA209030063D2A4 /* TrekFit */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -32,6 +66,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		767B2CA82FA508C900EB2B6B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		76B632792FA209030063D2A4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -46,6 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				76B6327E2FA209030063D2A4 /* TrekFit */,
+				767B2CAC2FA508C900EB2B6B /* TrekFitWatch Watch App */,
 				76B6327D2FA209030063D2A4 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,6 +96,7 @@
 			isa = PBXGroup;
 			children = (
 				76B6327C2FA209030063D2A4 /* TrekFit.app */,
+				767B2CAB2FA508C900EB2B6B /* TrekFitWatch Watch App.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -61,6 +104,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		767B2CAA2FA508C900EB2B6B /* TrekFitWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 767B2CB62FA508CA00EB2B6B /* Build configuration list for PBXNativeTarget "TrekFitWatch Watch App" */;
+			buildPhases = (
+				767B2CA72FA508C900EB2B6B /* Sources */,
+				767B2CA82FA508C900EB2B6B /* Frameworks */,
+				767B2CA92FA508C900EB2B6B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				767B2CAC2FA508C900EB2B6B /* TrekFitWatch Watch App */,
+			);
+			name = "TrekFitWatch Watch App";
+			packageProductDependencies = (
+			);
+			productName = "TrekFitWatch Watch App";
+			productReference = 767B2CAB2FA508C900EB2B6B /* TrekFitWatch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
 		76B6327B2FA209030063D2A4 /* TrekFit */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 76B6328A2FA209060063D2A4 /* Build configuration list for PBXNativeTarget "TrekFit" */;
@@ -68,10 +133,12 @@
 				76B632782FA209030063D2A4 /* Sources */,
 				76B632792FA209030063D2A4 /* Frameworks */,
 				76B6327A2FA209030063D2A4 /* Resources */,
+				767B2CB92FA508CA00EB2B6B /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				767B2CB42FA508CA00EB2B6B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				76B6327E2FA209030063D2A4 /* TrekFit */,
@@ -93,6 +160,9 @@
 				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
+					767B2CAA2FA508C900EB2B6B = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
 					76B6327B2FA209030063D2A4 = {
 						CreatedOnToolsVersion = 26.4.1;
 					};
@@ -113,11 +183,19 @@
 			projectRoot = "";
 			targets = (
 				76B6327B2FA209030063D2A4 /* TrekFit */,
+				767B2CAA2FA508C900EB2B6B /* TrekFitWatch Watch App */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		767B2CA92FA508C900EB2B6B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		76B6327A2FA209030063D2A4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -128,6 +206,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		767B2CA72FA508C900EB2B6B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		76B632782FA209030063D2A4 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -137,7 +222,89 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		767B2CB42FA508CA00EB2B6B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 767B2CAA2FA508C900EB2B6B /* TrekFitWatch Watch App */;
+			targetProxy = 767B2CB32FA508CA00EB2B6B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		767B2CB72FA508CA00EB2B6B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "TrekFitWatch Watch App/TrekFitWatch Watch App.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NS8WSVTKAD;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "TrekFitWatch-Watch-App-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = TrekFitWatch;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "\"TrekFit membutuhkan akses untuk mendapatkan data detak jantung secara real-time\"";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "\"TrekFit membutuhkan akses untuk mendapatkan data detak jantung secara real-time\"";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = revan.TrekFit;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = revan.TrekFit.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Debug;
+		};
+		767B2CB82FA508CA00EB2B6B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "TrekFitWatch Watch App/TrekFitWatch Watch App.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NS8WSVTKAD;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "TrekFitWatch-Watch-App-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = TrekFitWatch;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "\"TrekFit membutuhkan akses untuk mendapatkan data detak jantung secara real-time\"";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "\"TrekFit membutuhkan akses untuk mendapatkan data detak jantung secara real-time\"";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = revan.TrekFit;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = revan.TrekFit.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Release;
+		};
 		76B6328B2FA209060063D2A4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -146,14 +313,17 @@
 				CODE_SIGN_ENTITLEMENTS = TrekFit/TrekFit.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NS8WSVTKAD;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TrekFit/Info.plist;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "\"TrekFit membutuhkan akses detak jantung secara real time\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -179,14 +349,17 @@
 				CODE_SIGN_ENTITLEMENTS = TrekFit/TrekFit.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NS8WSVTKAD;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TrekFit/Info.plist;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "\"TrekFit membutuhkan akses detak jantung secara real time\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -326,6 +499,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		767B2CB62FA508CA00EB2B6B /* Build configuration list for PBXNativeTarget "TrekFitWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				767B2CB72FA508CA00EB2B6B /* Debug */,
+				767B2CB82FA508CA00EB2B6B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		76B632772FA209030063D2A4 /* Build configuration list for PBXProject "TrekFit" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

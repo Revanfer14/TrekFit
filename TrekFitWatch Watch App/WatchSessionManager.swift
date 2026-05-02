@@ -1,0 +1,178 @@
+//
+//  WatchSessionManager.swift
+//  TrekFit
+//
+//  Created by Revan Ferdinand on 01/05/26.
+//
+
+import Foundation
+import HealthKit
+import WatchConnectivity
+import Combine
+
+class WatchSessionManager: NSObject, ObservableObject {
+    
+    private let healthStore = HKHealthStore()
+    private var wcSession: WCSession?
+    private var workoutSession: HKWorkoutSession?
+    private var builder: HKLiveWorkoutBuilder?
+    
+    // Timer untuk memaksa pengiriman per 1 detik
+    private var heartRateTimer: Timer?
+    
+    @Published var currentHR: Double = 0
+    @Published var isRunning: Bool = false
+    
+    override init() {
+        super.init()
+        setupWCSession()
+    }
+    
+    // MARK: - WatchConnectivity Setup
+    
+    private func setupWCSession() {
+        guard WCSession.isSupported() else { return }
+        wcSession = WCSession.default
+        wcSession?.delegate = self
+        wcSession?.activate()
+    }
+    
+    // MARK: - HealthKit Authorization
+    
+    func requestAuthorization() async {
+        let typesToShare: Set = [HKObjectType.workoutType()]
+        let typesToRead: Set = [HKQuantityType(.heartRate)]
+        
+        try? await healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead)
+    }
+    
+    // MARK: - Start / Stop Workout Session
+    
+    func startWorkout() async {
+        await requestAuthorization()
+        
+        let config = HKWorkoutConfiguration()
+        config.activityType = .other // Mode 'Other' sangat bagus untuk membaca HR konstan
+        config.locationType = .indoor
+        
+        do {
+            let session = try HKWorkoutSession(healthStore: healthStore, configuration: config)
+            let builder = session.associatedWorkoutBuilder()
+            builder.dataSource = HKLiveWorkoutDataSource(healthStore: healthStore, workoutConfiguration: config)
+            
+            session.delegate = self
+            builder.delegate = self
+            
+            self.workoutSession = session
+            self.builder = builder
+            
+            session.startActivity(with: Date())
+            try await builder.beginCollection(at: Date())
+            
+            DispatchQueue.main.async {
+                self.isRunning = true
+                self.startPushingDataEverySecond() // Mulai timer pengirim
+            }
+        } catch {
+            print("❌ Failed to start workout: \(error)")
+        }
+    }
+    
+    func stopWorkout() async {
+        workoutSession?.end()
+        try? await builder?.endCollection(at: Date())
+        try? await builder?.finishWorkout()
+        
+        DispatchQueue.main.async {
+            self.isRunning = false
+            self.stopPushingData() // Matikan timer pengirim
+            self.currentHR = 0 // Reset HR
+        }
+    }
+    
+    // MARK: - Timer Logic (1 Detik)
+    
+    private func startPushingDataEverySecond() {
+        heartRateTimer?.invalidate()
+        
+        // Timer berjalan di Main Thread setiap 1.0 detik
+        heartRateTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            
+            // Cegah pengiriman nilai 0 jika sensor belum mendapat bacaan pertama
+            guard self.currentHR > 0 else { return }
+            
+            self.sendHRToiPhone(self.currentHR)
+            print("⏱️ Timer Tick: \(self.currentHR) bpm → forced sent to iPhone")
+        }
+    }
+    
+    private func stopPushingData() {
+        heartRateTimer?.invalidate()
+        heartRateTimer = nil
+    }
+    
+    // MARK: - Kirim HR ke iPhone
+    
+    private func sendHRToiPhone(_ bpm: Double) {
+        // isReachable memastikan aplikasi iPhone sedang aktif di layar
+        guard let session = wcSession, session.isReachable else {
+            print("⚠️ iPhone tidak reachable (layar mati atau app tertutup)")
+            return
+        }
+        
+        session.sendMessage(["hr": bpm], replyHandler: nil, errorHandler: { error in
+            print("❌ WCSession error: \(error.localizedDescription)")
+        })
+    }
+}
+
+// MARK: - HKWorkoutSessionDelegate
+
+extension WatchSessionManager: HKWorkoutSessionDelegate {
+    func workoutSession(_ session: HKWorkoutSession,
+                        didChangeTo toState: HKWorkoutSessionState,
+                        from fromState: HKWorkoutSessionState,
+                        date: Date) {
+        print("Workout state: \(fromState.rawValue) → \(toState.rawValue)")
+    }
+    
+    func workoutSession(_ session: HKWorkoutSession, didFailWithError error: Error) {
+        print("❌ Workout session error: \(error)")
+    }
+}
+
+// MARK: - HKLiveWorkoutBuilderDelegate
+
+extension WatchSessionManager: HKLiveWorkoutBuilderDelegate {
+    func workoutBuilder(_ workoutBuilder: HKLiveWorkoutBuilder,
+                        didCollectDataOf collectedTypes: Set<HKSampleType>) {
+        
+        guard let hrType = collectedTypes.first(where: {
+            $0 == HKQuantityType(.heartRate)
+        }) as? HKQuantityType else { return }
+        
+        guard let stats = workoutBuilder.statistics(for: hrType),
+              let latestValue = stats.mostRecentQuantity() else { return }
+        
+        let bpm = latestValue.doubleValue(for: HKUnit(from: "count/min"))
+        
+        // HANYA UPDATE NILAI LOKAL. JANGAN PUSH KE iPHONE DARI SINI.
+        DispatchQueue.main.async {
+            self.currentHR = bpm
+            print("💓 Sensor Updated: \(bpm) bpm")
+        }
+    }
+    
+    func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {}
+}
+
+// MARK: - WCSessionDelegate
+
+extension WatchSessionManager: WCSessionDelegate {
+    func session(_ session: WCSession,
+                 activationDidCompleteWith activationState: WCSessionActivationState,
+                 error: Error?) {
+        print("WCSession activated: \(activationState.rawValue)")
+    }
+}

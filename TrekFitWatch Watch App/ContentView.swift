@@ -1,0 +1,24 @@
+//
+//  ContentView.swift
+//  TrekFitWatch Watch App
+//
+//  Created by Revan Ferdinand on 01/05/26.
+//
+
+import SwiftUI
+
+struct ContentView: View {
+    var body: some View {
+        VStack {
+            Image(systemName: "globe")
+                .imageScale(.large)
+                .foregroundStyle(.tint)
+            Text("Hello, world!")
+        }
+        .padding()
+    }
+}
+
+#Preview {
+    ContentView()
+}
