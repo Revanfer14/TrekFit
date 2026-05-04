@@ -132,7 +132,6 @@ struct ChesterTestView: View {
                 .padding(.bottom, 48)
             }
         }
-        .animation(.easeInOut(duration: 0.08), value: isDark)
         .navigationBarHidden(true)
         .onAppear {
             viewModel.startTest()

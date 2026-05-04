@@ -206,15 +206,15 @@ final class ChesterTestViewModel: ObservableObject {
     // MARK: - Finish Test
 
     private func finishTest(reason: TestEndReason) {
-        guard !testFinished else { return }  // prevent double-trigger
+        guard !testFinished else { return }
         stopAll()
         stopReason = reason
 
-        // Record actual duration for last stage if stopped early
         stages[currentStageIndex].duration = stageElapsed
 
-        // Calculate VO2Max
         vo2max = calculateVO2Max()
+        
+        saveTestToUserDefaults()
 
         testFinished = true
     }
@@ -258,5 +258,28 @@ final class ChesterTestViewModel: ObservableObject {
     private static func loadProfile() -> UserProfile? {
         guard let data = UserDefaults.standard.data(forKey: "saved_user_profile") else { return nil }
         return try? JSONDecoder().decode(UserProfile.self, from: data)
+    }
+    
+    private func saveTestToUserDefaults() {
+        guard let profile = Self.loadProfile() else { return }
+        
+        // 1. Buat kerangka test baru dari profil
+        var test = ChesterTest(from: profile)
+        
+        // 2. Petakan array 'TestStage' (UI Model) menjadi 'StageResult' (Data Model)
+        test.stageResults = stages.map { stage in
+            StageResult(
+                stageNumber: stage.number,
+                duration: stage.duration,
+                heartRateReadings: stage.hrReadings
+            )
+        }
+        
+        // 3. Masukkan hasil akhirnya
+        test.vo2max = self.vo2max
+        test.endReason = self.stopReason ?? .completed
+        
+        // 4. Panggil method save() bawaan dari struct ChesterTest
+        test.save()
     }
 }
