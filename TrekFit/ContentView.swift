@@ -16,9 +16,21 @@ struct ContentView: View {
                     .font(.largeTitle.bold())
                 
                 NavigationLink {
+                    LandingView()
+                } label: {
+                    Text("Landing Page")
+                        .font(.headline)
+                        .frame(maxWidth: 100)
+                        .padding()
+                        .background(Color.orange)
+                        .foregroundColor(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                
+                NavigationLink {
                     ConnectWatchView()
                 } label: {
-                    Text("Continue")
+                    Text("Connnect to Watch")
                         .font(.headline)
                         .frame(maxWidth: 100)
                         .padding()
