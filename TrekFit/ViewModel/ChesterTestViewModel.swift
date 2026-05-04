@@ -5,247 +5,240 @@
 //  Created by Revan Ferdinand on 04/05/26.
 //
 
-//  Responsibilities:
-//    1. Load user profile (maxHR, hrThreshold) from UserDefaults
-//    2. Drive the stage timer (tick every 0.01s for smooth elapsed display)
-//    3. Drive the beat timer (tick at BPM interval → toggles isDark for flash effect)
-//    4. Auto-advance stages after 120 seconds
-//    5. Stop the test when HR ≥ threshold, all stages complete, or user taps Stop
-//    6. Expose all UI-facing state as @Published properties
-
 import SwiftUI
 import Foundation
 import Combine
 
-// MARK: - Stage Config
+// MARK: - Stage Model
 
-struct StageConfig {
-    let number: Int     // 1-based
-    let bpm: Int        // metronome BPM for this stage
+struct TestStage: Identifiable {
+    let id: Int
+    let number: Int                  // 1–5 (display label)
+    let workload: Double             // ml/kg/min, pre-defined per protocol (20cm step)
+    var hrReadings: [Double] = []    // all HR values collected during this stage
+    var duration: TimeInterval = 0   // actual duration (≤120s)
+
+    var avgHR: Double {
+        guard !hrReadings.isEmpty else { return 0 }
+        return hrReadings.reduce(0, +) / Double(hrReadings.count)
+    }
+
+    var lastHR: Double {
+        hrReadings.last ?? 0
+    }
 }
 
 // MARK: - ChesterTestViewModel
 
 final class ChesterTestViewModel: ObservableObject {
 
-    // MARK: - Stage Definitions
+    // MARK: - Published State (consumed by ChesterTestView)
 
-    let stages: [StageConfig] = [
-        StageConfig(number: 1, bpm: 60),
-        StageConfig(number: 2, bpm: 80),
-        StageConfig(number: 3, bpm: 100),
-        StageConfig(number: 4, bpm: 120),
-        StageConfig(number: 5, bpm: 140),
-    ]
-
-    let stageDuration: TimeInterval = 120
-
-    // MARK: - Dependencies
-
-    private let hrMonitor: HeartRateMonitor
-    private static let stageWorkloads: [Double] = [11, 14, 17, 20, 23]
-
-    // MARK: - Published UI State
-
-    /// Current stage index (0-based internally, displayed as 1-based)
+    @Published var stages: [TestStage]
     @Published var currentStageIndex: Int = 0
-    
-    /// Raw HR readings for the stage currently in progress
-    @Published var currentStageReadings: [Double] = []
+    @Published var currentHR: Double = 0
+    @Published var elapsedString: String = "0:00"
+    @Published var testFinished: Bool = false
+    @Published var stopReason: TestEndReason? = nil
+    @Published var vo2max: Double = 0
 
-    /// Completed stage results accumulated during the test
-    @Published var completedStages: [StageResult] = []
-
-    /// Elapsed seconds within the current stage
-    @Published var stageElapsed: TimeInterval = 0
-
-    /// Toggles on every beat — drives light ↔ dark flash in the View
+    // MARK: - Dark mode toggle (background flips on beat)
     @Published var isDark: Bool = false
 
-    /// True once the test has ended for any reason — triggers navigation to Results
-    @Published var testFinished: Bool = false
+    // MARK: - Constants
 
-    /// Why the test stopped
-    @Published var stopReason: TestEndReason = .completed
+    /// Workload (ml/kg/min) per stage for a 20cm step, per Sykes protocol
+    private static let stageWorkloads: [Double] = [11, 14, 17, 20, 23]
 
-    /// User profile-derived values
-    @Published var maxHR: Double = 195
-    @Published var hrThreshold: Double = 156
+    /// Duration of each stage in seconds
+    private static let stageDuration: TimeInterval = 120
+
+    /// Stop threshold — 80% of max HR
+    private static let hrThresholdRatio: Double = 0.80
+
+    // MARK: - Profile Data
+
+    private let userAge: Int
+    private let userWeight: Double
+    let maxHR: Double
+    let hrThreshold: Double          // 80% of maxHR
+
+    // MARK: - HR Monitor
+
+    private let hrMonitor: HeartRateMonitor
 
     // MARK: - Timers
 
     private var stageTimer: Timer?
-    private var beatTimer: Timer?
+    private var elapsedTimer: Timer?
+    private var stageElapsed: TimeInterval = 0
+    private var totalElapsed: TimeInterval = 0
 
-    // MARK: - Computed Properties
+    // MARK: - Moving Average (noise smoothing, window = 3)
 
-    var currentStage: StageConfig { stages[currentStageIndex] }
-
-    var currentHR: Double { hrMonitor.currentHR ?? 0 }
-
-    /// HR as a 0…1 fraction of maxHR — used for the orange progress bar
-    var hrProgress: Double {
-        guard maxHR > 0 else { return 0 }
-        return min(currentHR / maxHR, 1.0)
-    }
-
-    /// Elapsed time formatted as MM:SS,ms
-    var elapsedString: String {
-        let totalSeconds = Int(stageElapsed)
-        let minutes = totalSeconds / 60
-        let seconds = totalSeconds % 60
-        let ms = Int((stageElapsed - Double(totalSeconds)) * 100)
-        return String(format: "%02d:%02d,%02d", minutes, seconds, ms)
-    }
+    private var recentHRReadings: [Double] = []
+    private static let movingAvgWindow = 3
 
     // MARK: - Init
 
     init(hrMonitor: HeartRateMonitor) {
         self.hrMonitor = hrMonitor
+
+        // Load saved profile
+        let profile = ChesterTestViewModel.loadProfile()
+        self.userAge    = profile?.age    ?? 25
+        self.userWeight = profile?.weight ?? 70.0
+
+        // Derived HR values
+        self.maxHR      = Double(220 - (profile?.age ?? 25))
+        self.hrThreshold = maxHR * ChesterTestViewModel.hrThresholdRatio
+
+        // Build 5 stages
+        self.stages = ChesterTestViewModel.stageWorkloads.enumerated().map { idx, workload in
+            TestStage(id: idx, number: idx + 1, workload: workload)
+        }
+    }
+
+    // MARK: - Computed Helpers
+
+    var currentStage: TestStage { stages[currentStageIndex] }
+
+    /// HR as a fraction of maxHR (0.0 – 1.0), clamped for the progress bar
+    var hrProgress: Double {
+        min(currentHR / maxHR, 1.0)
     }
 
     // MARK: - Public API
 
-    /// Call from View's onAppear
     func startTest() {
-        loadProfile()
-        startHRRecording()
+        hrMonitor.onHeartRateUpdate = { [weak self] bpm in
+            self?.handleHRUpdate(bpm)
+        }
         startStageTimer()
-        startBeatTimer()
+        startElapsedTimer()
     }
 
-    /// Call from View's onDisappear or when navigating away
     func stopAll() {
         stageTimer?.invalidate()
-        stageTimer = nil
-        beatTimer?.invalidate()
-        beatTimer = nil
+        elapsedTimer?.invalidate()
+        hrMonitor.onHeartRateUpdate = nil
     }
 
-    /// Called when user confirms Stop
     func manualStop() {
-        stopReason = .manualStop
-        stopAll()
-        finalizeAndSave(reason: .manualStop)
-        testFinished = true
+        finishTest(reason: .manualStop)
     }
 
-    // MARK: - Profile Loading
+    // MARK: - HR Handling
 
-    private func loadProfile() {
-        if let data = UserDefaults.standard.data(forKey: "saved_user_profile"),
-           let profile = try? JSONDecoder().decode(UserProfile.self, from: data) {
-            maxHR = Double(220 - profile.age)
+    private func handleHRUpdate(_ rawBPM: Double) {
+        // --- Moving average (smooth noise) ---
+        recentHRReadings.append(rawBPM)
+        if recentHRReadings.count > Self.movingAvgWindow {
+            recentHRReadings.removeFirst()
         }
-        hrThreshold = maxHR * 0.8
+        let smoothed = recentHRReadings.reduce(0, +) / Double(recentHRReadings.count)
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.currentHR = smoothed
+
+            // Record into current stage
+            self.stages[self.currentStageIndex].hrReadings.append(smoothed)
+
+            // Check stop condition (use smoothed value)
+            if smoothed >= self.hrThreshold {
+                self.finishTest(reason: .maxHRReached)
+            }
+        }
     }
 
     // MARK: - Stage Timer
 
     private func startStageTimer() {
+        stageElapsed = 0
         stageTimer?.invalidate()
-        stageTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { [weak self] _ in
+
+        stageTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self else { return }
+            self.stageElapsed += 1
+            self.stages[self.currentStageIndex].duration = self.stageElapsed
 
-            self.stageElapsed += 0.01
-
-            // Check max HR threshold
-            if self.currentHR >= self.hrThreshold {
-                self.stopReason = .maxHRReached
-                self.stopAll()
-                self.finalizeAndSave(reason: .maxHRReached)
-                self.testFinished = true
-                return
-            }
-
-            // Auto-advance or complete
-            if self.stageElapsed >= self.stageDuration {
-                if self.currentStageIndex < self.stages.count - 1 {
-                    self.advanceStage()
-                } else {
-                    self.stopReason = .completed
-                    self.stopAll()
-                    self.finalizeAndSave(reason: .completed)
-                    self.testFinished = true
-                }
-            }
-        }
-    }
-    
-    // MARK: - HR Recording
-
-    private func startHRRecording() {
-        hrMonitor.onHeartRateUpdate = { [weak self] bpm in
-            guard let self, !self.testFinished else { return }
-            DispatchQueue.main.async {
-                self.currentStageReadings.append(bpm)
+            if self.stageElapsed >= Self.stageDuration {
+                self.advanceStage()
             }
         }
     }
 
     private func advanceStage() {
-        let result = StageResult(
-            stageNumber: currentStage.number,
-            duration: stageElapsed,
-            heartRateReadings: currentStageReadings
-        )
-        completedStages.append(result)
-        currentStageReadings = []
+        stageTimer?.invalidate()
 
-        currentStageIndex += 1
-        stageElapsed = 0
-        startBeatTimer()
+        let nextIndex = currentStageIndex + 1
+
+        if nextIndex >= stages.count {
+            // All 5 stages done
+            finishTest(reason: .completed)
+        } else {
+            currentStageIndex = nextIndex
+            stageElapsed = 0
+            recentHRReadings.removeAll()
+            startStageTimer()
+        }
     }
 
-    // MARK: - Beat Timer
+    // MARK: - Elapsed Timer (total test clock)
 
-    private func startBeatTimer() {
-        beatTimer?.invalidate()
-        let interval = 60.0 / Double(currentStage.bpm)
-        beatTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+    private func startElapsedTimer() {
+        totalElapsed = 0
+        elapsedTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self else { return }
-            DispatchQueue.main.async {
-                withAnimation(.easeInOut(duration: 0.08)) {
-                    self.isDark.toggle()
-                }
+            self.totalElapsed += 1
+            let minutes = Int(self.totalElapsed) / 60
+            let seconds = Int(self.totalElapsed) % 60
+            self.elapsedString = String(format: "%d:%02d", minutes, seconds)
+
+            // Background flash every ~beat (simulate metronome feel)
+            withAnimation(.easeInOut(duration: 0.08)) {
+                self.isDark.toggle()
             }
         }
     }
-    
-    // MARK: - Finalize
 
-    private func finalizeAndSave(reason: TestEndReason) {
-        // Simpan stage terakhir yang mungkin belum penuh
-        let lastResult = StageResult(
-            stageNumber: currentStage.number,
-            duration: stageElapsed,
-            heartRateReadings: currentStageReadings
-        )
-        completedStages.append(lastResult)
+    // MARK: - Finish Test
 
-        // Bangun ChesterTest dari UserDefaults profile
-        if let data = UserDefaults.standard.data(forKey: "saved_user_profile"),
-           let profile = try? JSONDecoder().decode(UserProfile.self, from: data) {
+    private func finishTest(reason: TestEndReason) {
+        guard !testFinished else { return }  // prevent double-trigger
+        stopAll()
+        stopReason = reason
 
-            var test = ChesterTest(from: profile)
-            test.stageResults = completedStages
-            test.endReason = reason
-            test.vo2max = calculateVO2Max()
-            test.save()
-        }
+        // Record actual duration for last stage if stopped early
+        stages[currentStageIndex].duration = stageElapsed
+
+        // Calculate VO2Max
+        vo2max = calculateVO2Max()
+
+        testFinished = true
     }
-    
+
+    // MARK: - VO2Max Calculation (Linear Extrapolation, Sykes method)
+    //
+    // Algorithm:
+    //   1. Collect (workload, avgHR) pairs from completed stages
+    //   2. Fit a linear regression: HR = a + b * workload
+    //   3. Extrapolate to maxHR → find the workload at maxHR
+    //   4. That workload IS the predicted VO2Max
+    //
+    // Reference: Sykes, K. & Roberts, A. (2004). Physiotherapy, 90(4), 183–188.
+
     private func calculateVO2Max() -> Double {
-        // Ambil stage yang punya HR readings
-        let validStages = completedStages.filter { !$0.heartRateReadings.isEmpty }
-        guard validStages.count >= 2 else { return 0 }
+        let completedStages = stages.filter { !$0.hrReadings.isEmpty }
+        guard completedStages.count >= 2 else { return 0 }
 
-        // Pasangkan setiap stage dengan workload-nya berdasarkan nomor stage (1-based)
-        let xs = validStages.map { Self.stageWorkloads[$0.stageNumber - 1] }  // workload
-        let ys = validStages.map { $0.heartRateReadings.reduce(0, +) / Double($0.heartRateReadings.count) }  // avgHR
-        let n  = Double(validStages.count)
+        // Kumpulkan pasangan (workload, avgHR) dari setiap stage
+        let xs = completedStages.map { $0.workload }  // x = workload
+        let ys = completedStages.map { $0.avgHR }     // y = heart rate
+        let n  = Double(completedStages.count)
 
-        // Linear regression: HR = a + b × workload
+        // Hitung slope (b) dan intercept (a) dari garis lurus: HR = a + b × workload
         let sumX  = xs.reduce(0, +)
         let sumY  = ys.reduce(0, +)
         let sumXY = zip(xs, ys).map(*).reduce(0, +)
@@ -254,8 +247,16 @@ final class ChesterTestViewModel: ObservableObject {
         let b = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)  // kemiringan garis
         let a = (sumY - b * sumX) / n                                   // titik awal garis
 
+        // Balik rumusnya: kita tahu maxHR, cari workload-nya
         // maxHR = a + b × vo2max  →  vo2max = (maxHR - a) / b
         guard b > 0 else { return 0 }
         return max(0, (maxHR - a) / b)
+    }
+
+    // MARK: - Persistence Helper
+
+    private static func loadProfile() -> UserProfile? {
+        guard let data = UserDefaults.standard.data(forKey: "saved_user_profile") else { return nil }
+        return try? JSONDecoder().decode(UserProfile.self, from: data)
     }
 }
