@@ -239,7 +239,7 @@
 				CODE_SIGN_ENTITLEMENTS = "TrekFitWatch Watch App/TrekFitWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NS8WSVTKAD;
+				DEVELOPMENT_TEAM = 3LU8LUNSN3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "TrekFitWatch-Watch-App-Info.plist";
@@ -247,13 +247,13 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "\"TrekFit membutuhkan akses untuk mendapatkan data detak jantung secara real-time\"";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "\"TrekFit membutuhkan akses untuk mendapatkan data detak jantung secara real-time\"";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = revan.TrekFit;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = axel.TrekFit;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = revan.TrekFit.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = axel.TrekFit.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -276,7 +276,7 @@
 				CODE_SIGN_ENTITLEMENTS = "TrekFitWatch Watch App/TrekFitWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NS8WSVTKAD;
+				DEVELOPMENT_TEAM = 3LU8LUNSN3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "TrekFitWatch-Watch-App-Info.plist";
@@ -284,7 +284,7 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "\"TrekFit membutuhkan akses untuk mendapatkan data detak jantung secara real-time\"";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "\"TrekFit membutuhkan akses untuk mendapatkan data detak jantung secara real-time\"";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = revan.TrekFit;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = axel.TrekFit;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -313,7 +313,7 @@
 				CODE_SIGN_ENTITLEMENTS = TrekFit/TrekFit.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NS8WSVTKAD;
+				DEVELOPMENT_TEAM = 3LU8LUNSN3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TrekFit/Info.plist;
@@ -329,7 +329,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = revan.TrekFit;
+				PRODUCT_BUNDLE_IDENTIFIER = axel.TrekFit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -349,7 +349,7 @@
 				CODE_SIGN_ENTITLEMENTS = TrekFit/TrekFit.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NS8WSVTKAD;
+				DEVELOPMENT_TEAM = 3LU8LUNSN3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TrekFit/Info.plist;
@@ -365,7 +365,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = revan.TrekFit;
+				PRODUCT_BUNDLE_IDENTIFIER = axel.TrekFit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

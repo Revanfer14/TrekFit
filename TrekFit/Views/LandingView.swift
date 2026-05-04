@@ -22,6 +22,12 @@ import SwiftUI
 
 struct LandingView: View {
 
+    // MARK: - Injected ViewModel
+
+    /// Received from ContentView — already created once at the root.
+    /// Using @ObservedObject (not @StateObject) because this view does NOT own it.
+    @ObservedObject var profileViewModel: SetProfileViewModel
+
     // MARK: - Navigation State
 
     /// Flips to true when the user taps "Jump In", pushing SetProfileView onto the stack
@@ -96,7 +102,7 @@ struct LandingView: View {
 
                 // Hidden NavigationLink — activated when navigateToSetProfile becomes true
                 NavigationLink(
-                    destination: SetProfileView(),
+                    destination: SetProfileView(viewModel: profileViewModel),
                     isActive: $navigateToSetProfile
                 ) { EmptyView() }
             }
@@ -109,5 +115,5 @@ struct LandingView: View {
 // MARK: - Preview
 
 #Preview {
-    LandingView()
+    LandingView(profileViewModel: SetProfileViewModel())
 }

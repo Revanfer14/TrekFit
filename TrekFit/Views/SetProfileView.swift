@@ -26,9 +26,9 @@ struct SetProfileView: View {
 
     // MARK: - ViewModel
 
-    /// All business logic (validation, persistence) lives here.
-    /// `@StateObject` ensures the ViewModel is created once and owned by this view.
-    @StateObject private var viewModel = SetProfileViewModel()
+    /// Injected from ContentView via LandingView — NOT owned here.
+    /// @ObservedObject means this view observes but does not create the ViewModel.
+    @ObservedObject var viewModel: SetProfileViewModel
 
     // MARK: - Navigation
 
@@ -197,14 +197,11 @@ struct SetProfileView: View {
 /// A bottom sheet with a text field for entering / editing the user's name.
 private struct NameInputSheet: View {
 
-    /// Two-way binding into the ViewModel's draft name
+    /// Direct two-way binding into the ViewModel's draft name.
+    /// No local buffer needed — binding directly eliminates the re-render lag.
     @Binding var name: String
 
-    /// Used to dismiss this sheet programmatically after saving
     @Environment(\.dismiss) private var dismiss
-
-    /// Local buffer so the user can cancel without committing changes
-    @State private var localName: String = ""
 
     var body: some View {
         NavigationStack {
@@ -213,7 +210,10 @@ private struct NameInputSheet: View {
                     .font(.headline)
                     .padding(.top, 8)
 
-                TextField("e.g. Jeson", text: $localName)
+                // Bound directly to the ViewModel property.
+                // Removing the localName copy removes the extra @State layer
+                // that was causing keyboard and typing lag on real devices.
+                TextField("e.g. Jeson", text: $name)
                     .font(.body)
                     .padding()
                     .background(Color(.systemGray6))
@@ -226,17 +226,10 @@ private struct NameInputSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        name = localName      // commit to the binding
-                        dismiss()
-                    }
-                    .foregroundColor(Color("AccentOrange"))
-                }
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Done") { dismiss() }
+                        .foregroundColor(Color("AccentOrange"))
                 }
             }
-            .onAppear { localName = name }   // pre-fill with existing value
         }
         .presentationDetents([.height(220)])
     }
@@ -311,5 +304,5 @@ private struct GenderPickerSheet: View {
 // MARK: - Preview
 
 #Preview {
-    SetProfileView()
+    SetProfileView(viewModel: SetProfileViewModel())
 }

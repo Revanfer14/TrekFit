@@ -23,7 +23,9 @@ final class HeartRateMonitor: NSObject {
     
     override init() {
         super.init()
-        setupWCSession()
+        Task{
+            setupWCSession()
+        }
     }
     
     // MARK: - WatchConnectivity

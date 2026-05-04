@@ -9,6 +9,8 @@ import SwiftUI
 
 struct ContentView: View {
     
+    @StateObject private var profileViewModel = SetProfileViewModel()
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
@@ -16,7 +18,7 @@ struct ContentView: View {
                     .font(.largeTitle.bold())
                 
                 NavigationLink {
-                    LandingView()
+                    LandingView(profileViewModel: profileViewModel)
                 } label: {
                     Text("Landing Page")
                         .font(.headline)
