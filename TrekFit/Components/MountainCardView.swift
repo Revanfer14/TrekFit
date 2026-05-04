@@ -2,129 +2,129 @@
 //  MountainCardView.swift
 //  TrekFit
 //
-//  Component: MountainCardView
-//  A self-contained card that displays a single mountain's photo, name,
-//  summit height, short description, and a "Select" button.
+//  Component: MountainCardView + MountainInfoSection
 //
-//  Layout (top → bottom inside the card):
+//  MountainCardView — full card with photo + info + Select button.
+//  Used in SelectMountainView and the "Compare another mountain" picker sheet.
+//
+//  MountainInfoSection — reusable bottom info block (name, height, description).
+//  Used by both MountainCardView (with Select button) and MountainDetailCard in ResultView
+//  (without Select button), ensuring pixel-perfect consistency between the two screens.
+//
+//  Layout:
 //    ┌──────────────────────────────┐
-//    │  Mountain photo (fixed height)│
+//    │  Mountain photo              │
 //    ├──────────────────────────────┤
-//    │  Name              [Select]  │
-//    │  ⛰ X,XXXm                   │
+//    │  [⛰] Name        [Select]  │  ← Select only in MountainCardView
+//    │      X,XXXm                  │
 //    │  Short description (≤3 lines)│
 //    └──────────────────────────────┘
-//
-//  Usage:
-//    MountainCardView(mountain: mountain) {
-//        // handle selection
-//    }
 //
 
 import SwiftUI
 
-// MARK: - MountainCardView
+// MARK: - MountainInfoSection
 
-struct MountainCardView: View {
+/// The bottom info block shared by MountainCardView and MountainDetailCard.
+/// Accepts an optional trailing view (Select button or Min VO2 badge) so callers
+/// control what appears on the right side of the name row.
+struct MountainInfoSection<TrailingView: View>: View {
 
-    // MARK: - Inputs
-
-    /// The mountain data to display on this card
     let mountain: Mountain
 
-    /// Called when the user taps the "Select" button on this card
-    let onSelect: () -> Void
-
-    // MARK: - Constants
-
-    /// Fixed height of the mountain photo area at the top of the card
-    private let photoHeight: CGFloat = 200
-
-    // MARK: - Body
+    /// Optional trailing view in the name row (e.g. Select button, Min VO2 badge, or EmptyView)
+    @ViewBuilder let trailingView: () -> TrailingView
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 6) {
 
-            // ── Mountain Photo ────────────────────────────────────────────
-            // Loads from Assets.xcassets using the imageName key (e.g. "Mountain1").
-            // Falls back to a gray placeholder if the asset is missing.
-            Image(mountain.imageName)
-                .resizable()
-                .scaledToFill()
-                .frame(maxWidth: .infinity)
-                .frame(height: photoHeight)
-                .clipped()                          // prevent image bleeding outside card bounds
-
-            // ── Info Section ──────────────────────────────────────────────
-            VStack(alignment: .leading, spacing: 6) {
-
-                // --- Name row + Select button ---
-                HStack(alignment: .center) {
-
-                    // Mountain name — bold headline
-                    Text(mountain.name)
-                        .font(.headline)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-
-                    Spacer()
-
-                    // Select button — orange pill, same brand style as PrimaryButtonView
-                    // but compact (fixed width) for use inside a card
-                    Button(action: onSelect) {
-                        Text("Select")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 10)
-                    }
-                    .background(Color("AccentOrange"))  // #FF8D28
-                    .clipShape(Capsule())
-                    .buttonStyle(.plain)
-                }
-
-                // --- Summit height row ---
-                // Uses a custom mountain icon from Assets.xcassets + formatted elevation
-                HStack(spacing: 4) {
-                    Image("mountainIcon")               // mountainIcon.jpg in Assets.xcassets
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 16, height: 16)
-
-                    Text(formattedHeight)
-                        .font(.caption)
-                        .foregroundColor(Color(.systemGray))
-                }
-
-                // --- Short description (max 3 lines) ---
-                Text(mountain.shortDescription)
-                    .font(.body)
+            // --- Name row + optional trailing view ---
+            HStack(alignment: .center) {
+                Text(mountain.name)
+                    .font(.headline)
+                    .fontWeight(.bold)
                     .foregroundColor(.primary)
-                    .lineLimit(3)                       // cap at 3 lines as per the design spec
-                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer()
+
+                trailingView()
             }
-            .padding(16)
+
+            // --- Mountain icon + summit height (same line, matching prototype) ---
+            HStack(spacing: 4) {
+                Image("mountainIcon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 16, height: 16)
+
+                Text(formattedHeight)
+                    .font(.caption)
+                    .foregroundColor(Color(.systemGray))
+            }
+
+            // --- Short description (max 3 lines) ---
+            Text(mountain.shortDescription)
+                .font(.body)
+                .foregroundColor(.primary)
+                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        // Card container styling
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            // Subtle border matching the card edge
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color(hex: "E6E6E6"), lineWidth: 1)
-        )
+        .padding(16)
     }
 
     // MARK: - Helpers
 
-    /// Formats the summit height with a thousands separator and "m" suffix.
-    /// e.g. 3726 → "3,676m"
     private var formattedHeight: String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         let formatted = formatter.string(from: NSNumber(value: mountain.summitHeight)) ?? "\(mountain.summitHeight)"
         return "\(formatted)m"
+    }
+}
+
+// MARK: - MountainCardView
+
+/// Full mountain card with photo + MountainInfoSection + Select button.
+/// Used in SelectMountainView and the picker sheet in ResultView.
+struct MountainCardView: View {
+
+    let mountain: Mountain
+    let onSelect: () -> Void
+
+    private let photoHeight: CGFloat = 200
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+
+            // ── Mountain Photo ────────────────────────────────────────────
+            Image(mountain.imageName)
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity)
+                .frame(height: photoHeight)
+                .clipped()
+
+            // ── Info Section with Select button ───────────────────────────
+            MountainInfoSection(mountain: mountain) {
+                Button(action: onSelect) {
+                    Text("Select")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                }
+                .background(Color("AccentOrange"))
+                .clipShape(Capsule())
+                .buttonStyle(.plain)
+            }
+        }
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color(hex: "E6E6E6"), lineWidth: 1)
+        )
     }
 }
 

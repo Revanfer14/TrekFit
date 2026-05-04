@@ -3,13 +3,25 @@
 //  TrekFit
 //
 //  Component: VO2MaxCardView
-//  A colored stat card displaying a VO2 Max value with a label and unit.
-//  Used in pairs (user vs mountain) or solo (no mountain selected).
+//  A colored stat card displaying a VO2 Max value with label and unit.
 //
-//  Color rules (per design spec):
-//    - .orange  → always used for the user's own VO2 Max card (#FF8D28)
-//    - .green   → mountain card when user VO2 Max ≥ mountain minimum (#34C759)
-//    - .red     → mountain card when user VO2 Max < mountain minimum (#FF383C)
+//  Layout (per design spec):
+//    ┌─────────────────────────────┐
+//    │ [icon]                      │
+//    │ Label text                  │
+//    │                             │
+//    │                    38.4     │
+//    │               ml/kg/min     │
+//    └─────────────────────────────┘
+//
+//  - Icon alone on top-left
+//  - Label below the icon, left-aligned
+//  - Value + unit pushed to bottom-right
+//
+//  Color rules:
+//    .orange → user's own VO2 Max card (#FF8D28), uses vo2icon.png asset
+//    .green  → mountain card when user passes (#34C759), uses mountain.2.fill SF symbol
+//    .red    → mountain card when user fails  (#FF383C), uses mountain.2.fill SF symbol
 //
 
 import SwiftUI
@@ -18,45 +30,33 @@ import SwiftUI
 
 struct VO2MaxCardView: View {
 
-    // MARK: - Card Style Enum
+    // MARK: - Card Style
 
-    /// Controls the background color of the card
     enum CardStyle {
-        case orange   // user's VO2 Max — always orange
-        case green    // mountain comparison — user passes
-        case red      // mountain comparison — user fails
+        case orange
+        case green
+        case red
 
-        /// The background color for this card style
         var backgroundColor: Color {
             switch self {
-            case .orange: return Color("AccentOrange")          // #FF8D28
-            case .green:  return Color(hex: "34C759")           // iOS system green
-            case .red:    return Color(hex: "FF383C")           // accent red
-            }
-        }
-
-        /// SF Symbol name shown at the top-left of the card
-        var iconName: String {
-            switch self {
-            case .orange: return "figure.walk"
-            case .green:  return "mountain.2.fill"
-            case .red:    return "mountain.2.fill"
+            case .orange: return Color("AccentOrange")
+            case .green:  return Color(hex: "34C759")
+            case .red:    return Color(hex: "FF383C")
             }
         }
     }
 
     // MARK: - Inputs
 
-    /// Visual style (orange / green / red)
     let style: CardStyle
 
-    /// The label shown above the number (e.g. "Your VO₂ max")
+    /// Label shown below the icon (e.g. "Your VO₂ max", "Est. Min. for Mt. Rinjani")
     let label: String
 
-    /// The VO2 Max value string (e.g. "38.4")
+    /// The formatted VO2 Max value (e.g. "38.4")
     let value: String
 
-    /// Whether this card takes full width (solo) or half width (paired)
+    /// Full width when used solo (no mountain selected), half width when paired
     var isFullWidth: Bool = false
 
     // MARK: - Body
@@ -64,12 +64,25 @@ struct VO2MaxCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
 
-            // --- Icon + label row ---
-            HStack(spacing: 6) {
-                Image(systemName: style.iconName)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
+            // ── Top section: icon + label ─────────────────────────────────
+            VStack(alignment: .leading, spacing: 6) {
 
+                // Icon — vo2icon.png for orange, SF symbol for green/red
+                Group {
+                    if style == .orange {
+                        // Custom image asset: add vo2icon.png to Assets.xcassets as "vo2icon"
+                        Image("vo2icon")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 22, height: 22)
+                    } else {
+                        Image(systemName: "mountain.2.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                }
+
+                // Label below icon, left-aligned, wraps to 2 lines if needed
                 Text(label)
                     .font(.subheadline)
                     .foregroundColor(.white)
@@ -79,21 +92,27 @@ struct VO2MaxCardView: View {
 
             Spacer()
 
-            // --- VO2 Max number + unit ---
-            HStack(alignment: .lastTextBaseline, spacing: 2) {
-                Text(value)
-                    .font(.system(size: isFullWidth ? 52 : 40, weight: .bold))
-                    .foregroundColor(.white)
+            // ── Bottom section: value + unit, right-aligned ───────────────
+            HStack {
+                Spacer()
 
-                Text("ml/kg/min")
-                    .font(.caption2)
-                    .foregroundColor(.white.opacity(0.85))
-                    .padding(.bottom, 4)
+                VStack(alignment: .trailing, spacing: 0) {
+
+                    // Large VO2 Max number
+                    Text(value)
+                        .font(.system(size: isFullWidth ? 52 : 38, weight: .bold))
+                        .foregroundColor(.white)
+
+                    // Unit on its own line, right-aligned below the number
+                    Text("ml/kg/min")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.85))
+                }
             }
         }
         .padding(16)
         .frame(maxWidth: isFullWidth ? .infinity : nil)
-        .frame(height: 150)
+        .frame(height: 160)
         .background(style.backgroundColor)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
@@ -102,9 +121,19 @@ struct VO2MaxCardView: View {
 // MARK: - Preview
 
 #Preview {
-    HStack {
-        VO2MaxCardView(style: .orange, label: "Your VO₂ max", value: "38.4")
-        VO2MaxCardView(style: .red,    label: "Est. Minimum for Mt. Semeru", value: "45.0")
+    VStack(spacing: 16) {
+        // Solo full-width (no mountain selected)
+        VO2MaxCardView(style: .orange, label: "Your VO₂ max", value: "38.4", isFullWidth: true)
+
+        // Paired (mountain selected)
+        HStack(spacing: 12) {
+            VO2MaxCardView(style: .orange, label: "Your VO₂ max", value: "38.4")
+            VO2MaxCardView(style: .red, label: "Est. Min. for Mt. Rinjani", value: "45.0")
+        }
+        HStack(spacing: 12) {
+            VO2MaxCardView(style: .orange, label: "Your VO₂ max", value: "38.4")
+            VO2MaxCardView(style: .green, label: "Est. Min. for Mt. Gede", value: "35.0")
+        }
     }
     .padding()
 }
