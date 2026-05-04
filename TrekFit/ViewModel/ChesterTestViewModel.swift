@@ -15,6 +15,7 @@ struct TestStage: Identifiable {
     let id: Int
     let number: Int                  // 1–5 (display label)
     let workload: Double             // ml/kg/min, pre-defined per protocol (20cm step)
+    let bpm: Int
     var hrReadings: [Double] = []    // all HR values collected during this stage
     var duration: TimeInterval = 0   // actual duration (≤120s)
 
@@ -31,8 +32,6 @@ struct TestStage: Identifiable {
 // MARK: - ChesterTestViewModel
 
 final class ChesterTestViewModel: ObservableObject {
-
-    // MARK: - Published State (consumed by ChesterTestView)
 
     @Published var stages: [TestStage]
     @Published var currentStageIndex: Int = 0
@@ -51,7 +50,7 @@ final class ChesterTestViewModel: ObservableObject {
     private static let stageWorkloads: [Double] = [11, 14, 17, 20, 23]
 
     /// Duration of each stage in seconds
-    private static let stageDuration: TimeInterval = 120
+    private static let stageDuration: TimeInterval = 10
 
     /// Stop threshold — 80% of max HR
     private static let hrThresholdRatio: Double = 0.80
@@ -73,6 +72,7 @@ final class ChesterTestViewModel: ObservableObject {
     private var elapsedTimer: Timer?
     private var stageElapsed: TimeInterval = 0
     private var totalElapsed: TimeInterval = 0
+    private var beatTimer: Timer?
 
     // MARK: - Moving Average (noise smoothing, window = 3)
 
@@ -92,11 +92,15 @@ final class ChesterTestViewModel: ObservableObject {
         // Derived HR values
         self.maxHR      = Double(220 - (profile?.age ?? 25))
         self.hrThreshold = maxHR * ChesterTestViewModel.hrThresholdRatio
-
+        
+        let stageData: [(workload: Double, bpm: Int)] = [
+                (11, 60), (14, 80), (17, 100), (20, 120), (23, 140)
+            ]
+        
         // Build 5 stages
-        self.stages = ChesterTestViewModel.stageWorkloads.enumerated().map { idx, workload in
-            TestStage(id: idx, number: idx + 1, workload: workload)
-        }
+        self.stages = stageData.enumerated().map { idx, data in
+                TestStage(id: idx, number: idx + 1, workload: data.workload, bpm: data.bpm) // <-- Masukkan data.bpm
+            }
     }
 
     // MARK: - Computed Helpers
@@ -116,11 +120,13 @@ final class ChesterTestViewModel: ObservableObject {
         }
         startStageTimer()
         startElapsedTimer()
+        startBeatTimer()
     }
 
     func stopAll() {
         stageTimer?.invalidate()
         elapsedTimer?.invalidate()
+        beatTimer?.invalidate()
         hrMonitor.onHeartRateUpdate = nil
     }
 
@@ -182,6 +188,7 @@ final class ChesterTestViewModel: ObservableObject {
             stageElapsed = 0
             recentHRReadings.removeAll()
             startStageTimer()
+            startBeatTimer()
         }
     }
 
@@ -195,10 +202,23 @@ final class ChesterTestViewModel: ObservableObject {
             let minutes = Int(self.totalElapsed) / 60
             let seconds = Int(self.totalElapsed) % 60
             self.elapsedString = String(format: "%d:%02d", minutes, seconds)
-
-            // Background flash every ~beat (simulate metronome feel)
-            withAnimation(.easeInOut(duration: 0.08)) {
-                self.isDark.toggle()
+        }
+    }
+    
+    private func startBeatTimer() {
+        beatTimer?.invalidate()
+        
+        // Hitung interval waktu antar ketukan berdasarkan BPM saat ini
+        // Rumus: 60 detik dibagi BPM
+        let interval = 60.0 / Double(currentStage.bpm)
+        
+        beatTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            DispatchQueue.main.async {
+                withAnimation(.easeInOut(duration: 0.08)) {
+                    playSound("BeepSound") //
+                    self.isDark.toggle()
+                }
             }
         }
     }

@@ -146,9 +146,95 @@ struct ChesterTestView: View {
             Button("Continue", role: .cancel) {}
         }
         .navigationDestination(isPresented: $viewModel.testFinished) {
-            // TODO: Replace with ResultsView(viewModel: viewModel)
-            Text("Test Finished")
-        }
+            // Ini nanti jadi ResultView
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            Text("Hasil Uji Sementara")
+                                .font(.largeTitle)
+                                .bold()
+                                .padding(.top, 32)
+                            
+                            // ── Card VO2 Max ──────────────────────────────────────────
+                            VStack(spacing: 8) {
+                                Text("Estimasi VO2 Max")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                
+                                Text(String(format: "%.1f", viewModel.vo2max))
+                                    .font(.system(size: 64, weight: .heavy, design: .rounded))
+                                    .foregroundColor(.orange)
+                                
+                                Text("ml/kg/min")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 24)
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(20)
+                            
+                            // ── Alasan Berhenti ───────────────────────────────────────
+                            if let reason = viewModel.stopReason {
+                                HStack {
+                                    Text("Alasan Berhenti:")
+                                        .fontWeight(.semibold)
+                                    Spacer()
+                                    Text(reason.rawValue.capitalized) // Mengambil string dari enum TestEndReason
+                                        .foregroundColor(.red)
+                                }
+                                .padding()
+                                .background(Color(UIColor.secondarySystemBackground))
+                                .cornerRadius(12)
+                            }
+                            
+                            // ── Rincian Per Stage ─────────────────────────────────────
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Rincian Stage")
+                                    .font(.title2)
+                                    .bold()
+                                    .padding(.bottom, 4)
+                                
+                                // Hanya tampilkan stage yang punya data (tidak kosong)
+                                let validStages = viewModel.stages.filter { !$0.hrReadings.isEmpty }
+                                
+                                ForEach(validStages) { stage in
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("Stage \(stage.number)")
+                                            .font(.headline)
+                                        
+                                        HStack {
+                                            VStack(alignment: .leading) {
+                                                Text("Durasi")
+                                                    .font(.caption).foregroundColor(.secondary)
+                                                Text("\(Int(stage.duration)) dtk")
+                                                    .font(.subheadline).bold()
+                                            }
+                                            Spacer()
+                                            VStack(alignment: .center) {
+                                                Text("Avg HR")
+                                                    .font(.caption).foregroundColor(.secondary)
+                                                Text("\(Int(stage.avgHR)) bpm")
+                                                    .font(.subheadline).bold()
+                                            }
+                                            Spacer()
+                                            VStack(alignment: .trailing) {
+                                                Text("Last HR")
+                                                    .font(.caption).foregroundColor(.secondary)
+                                                Text("\(Int(stage.lastHR)) bpm")
+                                                    .font(.subheadline).bold()
+                                            }
+                                        }
+                                    }
+                                    .padding()
+                                    .background(Color(UIColor.secondarySystemBackground))
+                                    .cornerRadius(12)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 24)
+                    }
+                    .navigationBarBackButtonHidden(true) // Cegah user swipe back ke halaman tes yang sudah selesai
+                }
     }
 }
 
