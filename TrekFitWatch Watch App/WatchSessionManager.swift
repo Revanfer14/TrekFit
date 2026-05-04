@@ -22,6 +22,7 @@ class WatchSessionManager: NSObject, ObservableObject {
     
     @Published var currentHR: Double = 0
     @Published var isRunning: Bool = false
+    @Published var isStarting: Bool = false
     
     override init() {
         super.init()
@@ -48,11 +49,15 @@ class WatchSessionManager: NSObject, ObservableObject {
     
     // MARK: - Start / Stop Workout Session
     
-    func startWorkout() async {
+    func startWorkout() async {        
         await requestAuthorization()
         
+        DispatchQueue.main.async  {
+            self.isStarting = true
+        }
+        
         let config = HKWorkoutConfiguration()
-        config.activityType = .other // Mode 'Other' sangat bagus untuk membaca HR konstan
+        config.activityType = .other 
         config.locationType = .indoor
         
         do {
@@ -70,8 +75,9 @@ class WatchSessionManager: NSObject, ObservableObject {
             try await builder.beginCollection(at: Date())
             
             DispatchQueue.main.async {
+                self.isStarting = false
                 self.isRunning = true
-                self.startPushingDataEverySecond() // Mulai timer pengirim
+                self.startPushingDataEverySecond()
             }
         } catch {
             print("❌ Failed to start workout: \(error)")
@@ -85,8 +91,8 @@ class WatchSessionManager: NSObject, ObservableObject {
         
         DispatchQueue.main.async {
             self.isRunning = false
-            self.stopPushingData() // Matikan timer pengirim
-            self.currentHR = 0 // Reset HR
+            self.stopPushingData()
+            self.currentHR = 0
         }
     }
     

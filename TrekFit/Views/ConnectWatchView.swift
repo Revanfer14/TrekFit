@@ -56,7 +56,6 @@ struct ConnectWatchView: View {
                 
                 ZStack {
                     if isAuthorized && hrMonitor.isReceivingData {
-                        // Tampilkan HR jika sudah authorized dan data sudah masuk
                         HStack {
                             ZStack {
                                 Image(systemName: "applewatch")

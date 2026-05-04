@@ -11,6 +11,8 @@ struct CircleLoadingView: View {
     @State private var count = 3
     @State private var goNext = false
     
+    var hrMonitor: HeartRateMonitor
+    
     var body: some View {
         VStack {
             ZStack {
@@ -30,7 +32,7 @@ struct CircleLoadingView: View {
             startCountdown()
         }
         .navigationDestination(isPresented: $goNext) {
-            ChesterTestView()
+            ChesterTestView(hrMonitor: hrMonitor)
         }
     }
     
@@ -47,5 +49,5 @@ struct CircleLoadingView: View {
 }
 
 #Preview {
-    CircleLoadingView()
+    CircleLoadingView(hrMonitor: HeartRateMonitor())
 }

@@ -12,50 +12,41 @@
 
 import Foundation
 
-// MARK: - StageResult
-
-/// Heart rate and timing data collected during one stage of the Chester Step Test.
 struct StageResult: Codable {
     var stageNumber: Int
-    var averageHeartRate: Double     // renamed from averageHR
-    var lastHeartRate: Double        // renamed from lastHR
     var duration: TimeInterval
+    var heartRateReadings: [Double]
+    
+    var averageHeartRate: Double {
+        guard !heartRateReadings.isEmpty else { return 0 }
+        return heartRateReadings.reduce(0, +) / Double(heartRateReadings.count)
+    }
+    
+    var lastHeartRate: Double {
+        heartRateReadings.last ?? 0
+    }
+
 }
 
-// MARK: - ChesterTest
+enum TestEndReason: String, Codable {
+    case completed
+    case maxHRReached
+    case manualStop
+}
 
-/// Represents a single Chester Step Test session performed by the user.
-/// User profile data (name, age, gender) is copied in at test creation time
-/// so the log is self-contained even if the profile changes later.
 struct ChesterTest: Codable {
 
-    // MARK: - User Profile Fields (from UserProfile)
-
-    /// User's display name — copied from UserProfile.name
     var name: String
-
-    /// User's age at the time of the test — copied from UserProfile.age
     var age: Int
-
-    /// User's gender — copied from UserProfile.gender (stored as raw String for Codable)
     var gender: String
-
-    // MARK: - Test Session Fields
-
-    /// Date and time the test was conducted
-    var testDate: Date                // renamed from tanggal
-
-    /// Individual stage results collected during the test
+    var testDate: Date
     var stageResults: [StageResult]
-
-    /// Estimated VO2 Max (mL/kg/min) calculated after the test completes.
-    /// This is the primary value consumed by ResultView for comparison.
     var vo2max: Double
+    var maxHr: Double
+    var targetHr: Double
+    var endReason: TestEndReason
+    
 
-    // MARK: - Init
-
-    /// Creates a new test session by pulling identity fields from a UserProfile.
-    /// This way ChesterTest is always in sync with the profile at the time of testing.
     init(from profile: UserProfile, testDate: Date = .now) {
         self.name = profile.name
         self.age = profile.age
@@ -63,6 +54,9 @@ struct ChesterTest: Codable {
         self.testDate = testDate
         self.stageResults = []
         self.vo2max = 0
+        self.maxHr = 220 - Double(profile.age)
+        self.targetHr = maxHr * 0.80
+        self.endReason = .completed
     }
 }
 
@@ -100,10 +94,11 @@ extension ChesterTest {
         test.gender = Gender.male.rawValue
         test.vo2max = 38.4
         test.stageResults = [
-            StageResult(stageNumber: 1, averageHeartRate: 110, lastHeartRate: 115, duration: 120),
-            StageResult(stageNumber: 2, averageHeartRate: 125, lastHeartRate: 130, duration: 120),
-            StageResult(stageNumber: 3, averageHeartRate: 140, lastHeartRate: 145, duration: 120)
+            StageResult(stageNumber: 1, duration: 120, heartRateReadings: [105, 108, 112, 115]),
+            StageResult(stageNumber: 2, duration: 120, heartRateReadings: [120, 125, 128, 130]),
+            StageResult(stageNumber: 3, duration: 120, heartRateReadings: [138, 141, 143, 145])
         ]
+        test.endReason = .completed
         return test
     }
 }

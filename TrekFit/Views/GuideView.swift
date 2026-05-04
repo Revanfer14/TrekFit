@@ -10,9 +10,7 @@ import SwiftUI
 struct GuideView: View {
     @Environment(\.dismiss) private var dismiss
     
-    // Inject HealthKitManager dari halaman sebelumnya
-    // Gunakan @ObservedObject agar UI bereaksi terhadap perubahan isWorkoutModeActive
-    var hrMonitor: HeartRateMonitor
+    @State var hrMonitor: HeartRateMonitor
     
     var body: some View {
         VStack(spacing: 0) {
@@ -122,7 +120,7 @@ struct GuideView: View {
             
             // MARK: - Bottom Button (Dynamic State)
             VStack {
-                NavigationLink(destination: CircleLoadingView()) {
+                NavigationLink(destination: CircleLoadingView(hrMonitor: hrMonitor)) {
                     HStack(spacing: 12) {
                         if !hrMonitor.isReceivingData {
                             ProgressView()

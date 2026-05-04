@@ -66,6 +66,13 @@ final class SetProfileViewModel: ObservableObject {
             showValidationAlert = true
             return false
         }
+        
+        // --- Validation: Weight ---
+            guard draft.weight > 0 else {
+                validationMessage = "Please enter your body weight before saving."
+                showValidationAlert = true
+                return false
+            }
 
         // --- Persistence ---
         // Encode the Codable struct and write the raw Data to UserDefaults.
