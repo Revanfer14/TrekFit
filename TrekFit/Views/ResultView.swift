@@ -5,36 +5,21 @@
 //  View: ResultView
 //  Displays the Chester Step Test result to the user.
 //
-//  Two display modes depending on whether a mountain was selected:
+//  Three display modes:
 //
-//  Mode A — Mountain selected:
-//    ┌──────────────────────────────────────────────┐
-//    │  Hi, [Name]                                  │
-//    │  Here's Your Result                          │
-//    │                                              │
-//    │  [Orange: User VO₂] [Red/Green: Mountain]   │
-//    │  Choose another mountain ↕                   │
-//    │                                              │
-//    │  RECOMMENDED MOUNTAIN (if user fails)        │
-//    │  [RecommendedMountainCard]                   │
-//    │                                              │
-//    │  disclaimer                                  │
-//    │  [Save Data Log]                             │
-//    └──────────────────────────────────────────────┘
+//  Mode A — Mountain selected, user PASSES (vo2max >= mountain minimum):
+//    [Orange: User VO₂]  [Green: Mt. X minimum]
+//    "Compare another mountain" link
+//    MOUNTAIN PROFILE section (same card as SelectMountain, no Select button)
 //
-//  Mode B — No mountain selected (skipped):
-//    ┌──────────────────────────────────────────────┐
-//    │  Hi, [Name]                                  │
-//    │  Here's Your Result                          │
-//    │                                              │
-//    │  [Orange: User VO₂ — full width]             │
-//    │                                              │
-//    │  RECOMMENDED MOUNTAIN                        │
-//    │  [RecommendedMountainCard]                   │
-//    │                                              │
-//    │  disclaimer                                  │
-//    │  [Save Data Log]                             │
-//    └──────────────────────────────────────────────┘
+//  Mode B — Mountain selected, user FAILS (vo2max < mountain minimum):
+//    [Orange: User VO₂]  [Red: Mt. X minimum]
+//    "Compare another mountain" link
+//    RECOMMENDED MOUNTAIN section (best safe alternative)
+//
+//  Mode C — No mountain selected (skipped):
+//    [Orange: User VO₂ — full width]
+//    RECOMMENDED MOUNTAIN section (best safe mountain)
 //
 
 import SwiftUI
@@ -49,7 +34,6 @@ struct ResultView: View {
 
     // MARK: - Init
 
-    /// Accepts a pre-built TestResult from the navigation flow.
     init(result: TestResult) {
         _viewModel = StateObject(wrappedValue: ResultViewModel(result: result))
     }
@@ -64,19 +48,26 @@ struct ResultView: View {
                 headerSection
 
                 // ── VO2 Max cards ─────────────────────────────────────────
-                // Layout changes based on whether a mountain is selected.
                 if viewModel.isMountainSelected {
-                    // Mode A: two cards side by side
-                    mountainSelectedCards
+                    mountainSelectedCards       // Mode A or B: two cards side by side
                 } else {
-                    // Mode B: one full-width card
-                    soloVO2Card
+                    soloVO2Card                 // Mode C: one full-width card
                 }
 
-                // ── Recommended Mountain ──────────────────────────────────
-                // Shown when: user fails selected mountain OR no mountain was selected
+                // ── Mountain Profile (Mode A — user passes) ───────────────
+                // Shows the chosen mountain card without a Select button
+                if viewModel.isMountainSelected && viewModel.userPassesSelectedMountain,
+                   let mountain = viewModel.currentSelectedMountain {
+                    mountainProfileSection(mountain: mountain)
+                }
+
+                // ── Recommended Mountain (Mode B & C — user fails or skipped) ──
+                // Shows the best safe mountain based on smallest-gap algorithm
                 if let recommended = viewModel.recommendedMountain {
-                    recommendedSection(mountain: recommended)
+                    mountainSection(
+                        title: "RECOMMENDED MOUNTAIN",
+                        mountain: recommended
+                    )
                 }
 
                 Spacer(minLength: 16)
@@ -92,7 +83,7 @@ struct ResultView: View {
         .navigationBarBackButtonHidden(true)
         .navigationBarHidden(true)
 
-        // ── "Choose another mountain" bottom sheet ────────────────────────
+        // ── "Compare another mountain" bottom sheet ───────────────────────
         .sheet(isPresented: $viewModel.showMountainPicker) {
             MountainPickerSheet(viewModel: viewModel)
         }
@@ -114,34 +105,35 @@ struct ResultView: View {
         }
     }
 
-    /// Mode A: Two cards side by side — user VO2 (orange) + mountain minimum (red/green)
+    /// Mode A & B: Two side-by-side cards + "Compare another mountain" link below
     private var mountainSelectedCards: some View {
         VStack(spacing: 10) {
             HStack(spacing: 12) {
 
-                // User's VO2 Max — always orange
+                // Left card — user's VO2 Max, always orange
                 VO2MaxCardView(
                     style: .orange,
                     label: "Your VO₂ max",
                     value: viewModel.formattedUserVO2Max
                 )
 
-                // Mountain minimum — green if user passes, red if user fails
+                // Right card — mountain minimum
+                // Green = user passes (≥ minimum), Red = user fails (< minimum)
                 VO2MaxCardView(
                     style: viewModel.userPassesSelectedMountain ? .green : .red,
-                    label: "Est. Minimum for \(viewModel.currentSelectedMountain?.name ?? "")",
+                    label: "Est. Min. for \(viewModel.shortMountainName)",   // "Mt. Rinjani" — short form
                     value: viewModel.formattedMountainVO2Max
                 )
             }
 
-            // "Choose another mountain" link — only when mountain is selected
+            // "Compare another mountain" — tapping opens the mountain picker sheet
             Button {
                 viewModel.showMountainPicker = true
             } label: {
                 HStack(spacing: 4) {
-                    Text("Choose another mountain")
+                    Text("Compare another mountain")
                         .font(.subheadline)
-                        .foregroundColor(Color(hex: "007AFF"))   // iOS system blue link color
+                        .foregroundColor(Color(hex: "007AFF"))
 
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.caption)
@@ -153,7 +145,7 @@ struct ResultView: View {
         }
     }
 
-    /// Mode B: Single full-width orange card when no mountain was selected
+    /// Mode C: Single full-width orange VO2 card when no mountain was selected
     private var soloVO2Card: some View {
         VO2MaxCardView(
             style: .orange,
@@ -163,33 +155,40 @@ struct ResultView: View {
         )
     }
 
-    /// Recommended mountain section — label + card
-    private func recommendedSection(mountain: Mountain) -> some View {
+    /// Mode A — "MOUNTAIN PROFILE" section shown when user passes their selected mountain.
+    /// Reuses MountainDetailCard (same layout as SelectMountain card, but without Select button).
+    private func mountainProfileSection(mountain: Mountain) -> some View {
+        mountainSection(title: "MOUNTAIN PROFILE", mountain: mountain)
+    }
+
+    /// Reusable section builder: a labeled header + a MountainDetailCard below it.
+    /// Used for both "MOUNTAIN PROFILE" and "RECOMMENDED MOUNTAIN".
+    private func mountainSection(title: String, mountain: Mountain) -> some View {
         VStack(alignment: .leading, spacing: 10) {
 
-            // Section header label — all caps, small, gray
-            Text("RECOMMENDED MOUNTAIN")
+            // Section header — all caps, small, gray
+            Text(title)
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundColor(Color(.systemGray))
                 .kerning(0.5)
 
-            RecommendedMountainCard(mountain: mountain)
+            // Mountain card without Select button — reusable component
+            MountainDetailCard(mountain: mountain)
         }
     }
 
-    /// Disclaimer text + Save Data Log button
+    /// Disclaimer + Save Data Log button pinned to the bottom of the scroll view
     private var bottomSection: some View {
         VStack(spacing: 16) {
 
-            // Disclaimer
             Text("These results only reflect your aerobic capacity for trekking, not full hiking readiness")
                 .font(.caption)
                 .foregroundColor(Color(.systemGray))
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
 
-            // Save Data Log — no action yet (prototype)
+            // Save Data Log — no action in prototype stage
             PrimaryButtonView(title: "Save Data Log") {
                 // TODO: Implement data log persistence in a future sprint
             }
@@ -197,15 +196,81 @@ struct ResultView: View {
     }
 }
 
+// MARK: - MountainDetailCard
+
+/// A read-only mountain card showing photo, name, height, and description.
+/// Same visual as MountainCardView in SelectMountainView but WITHOUT the Select button.
+/// Used in ResultView for both "Mountain Profile" and "Recommended Mountain" sections.
+private struct MountainDetailCard: View {
+
+    let mountain: Mountain
+
+    private let photoHeight: CGFloat = 180
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+
+            // ── Mountain photo ────────────────────────────────────────────
+            Image(mountain.imageName)
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity)
+                .frame(height: photoHeight)
+                .clipped()
+
+            // ── Info section ──────────────────────────────────────────────
+            VStack(alignment: .leading, spacing: 6) {
+
+                // Name row (no Select button here — read-only)
+                HStack(spacing: 6) {
+                    Image("mountainIcon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 18, height: 18)
+
+                    Text(mountain.name)
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                }
+
+                // Summit height
+                Text(formattedHeight)
+                    .font(.caption)
+                    .foregroundColor(Color(.systemGray))
+
+                // Short description (max 3 lines — same as SelectMountain card)
+                Text(mountain.shortDescription)
+                    .font(.body)
+                    .foregroundColor(.primary)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(16)
+        }
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color(hex: "E6E6E6"), lineWidth: 1)
+        )
+    }
+
+    private var formattedHeight: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        let formatted = formatter.string(from: NSNumber(value: mountain.summitHeight)) ?? "\(mountain.summitHeight)"
+        return "\(formatted) m"
+    }
+}
+
 // MARK: - MountainPickerSheet
 
-/// Bottom sheet reusing mountain list + search, presented when user taps "Choose another mountain".
-/// Selecting a mountain updates the comparison target in ResultViewModel.
+/// Bottom sheet shown when user taps "Compare another mountain".
+/// Reuses MountainCardView with search — selecting a mountain updates the comparison in ResultViewModel.
 private struct MountainPickerSheet: View {
 
-    /// Shared ViewModel — selection updates flow back to ResultView reactively
     @ObservedObject var viewModel: ResultViewModel
-
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -215,8 +280,6 @@ private struct MountainPickerSheet: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack(spacing: 16) {
                         ForEach(viewModel.filteredPickerMountains) { mountain in
-
-                            // Reuse MountainCardView — Select triggers comparison update
                             MountainCardView(mountain: mountain) {
                                 viewModel.selectNewMountain(mountain)
                             }
@@ -227,7 +290,7 @@ private struct MountainPickerSheet: View {
                     .padding(.top, 16)
                 }
 
-                // Search bar pinned to bottom (same as SelectMountainView)
+                // Search bar pinned to bottom
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(Color(.systemGray))
@@ -252,7 +315,7 @@ private struct MountainPickerSheet: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 24)
             }
-            .navigationTitle("Choose Mountain")
+            .navigationTitle("Compare Mountain")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -265,9 +328,9 @@ private struct MountainPickerSheet: View {
     }
 }
 
-// MARK: - Preview (Mountain Selected — fails)
+// MARK: - Previews
 
-#Preview("With Mountain — Fail") {
+#Preview("Mountain Selected — Fail") {
     NavigationStack {
         ResultView(result: TestResult(
             userVO2Max: 38.4,
@@ -277,7 +340,7 @@ private struct MountainPickerSheet: View {
     }
 }
 
-#Preview("With Mountain — Pass") {
+#Preview("Mountain Selected — Pass") {
     NavigationStack {
         ResultView(result: TestResult(
             userVO2Max: 38.4,

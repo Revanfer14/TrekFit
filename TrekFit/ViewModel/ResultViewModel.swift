@@ -60,6 +60,13 @@ final class ResultViewModel: ObservableObject {
         return String(format: "%.1f", mountain.minimumVO2Max)
     }
 
+    /// Shortened mountain name for use in compact UI like the VO2 card label.
+    /// Replaces "Mount" with "Mt." to prevent text clipping (e.g. "Mt. Rinjani")
+    var shortMountainName: String {
+        guard let name = currentSelectedMountain?.name else { return "" }
+        return name.replacingOccurrences(of: "Mount ", with: "Mt. ")
+    }
+
     // MARK: - Computed: Comparison state
 
     /// Whether a mountain is currently selected for comparison

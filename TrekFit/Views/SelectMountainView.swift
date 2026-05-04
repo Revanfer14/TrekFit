@@ -72,7 +72,7 @@ struct SelectMountainView: View {
                             // User selected this mountain → build TestResult with it
                             navigationResult = TestResult(
                                 userVO2Max: chesterTest.vo2max,
-                                userName: userProfile.name,
+                                userName: chesterTest.name,       // name is now stored in ChesterTest
                                 selectedMountain: mountain
                             )
                             navigateToResult = true
@@ -120,8 +120,8 @@ struct SelectMountainView: View {
                 Button {
                     navigationResult = TestResult(
                         userVO2Max: chesterTest.vo2max,
-                        userName: userProfile.name,
-                        selectedMountain: nil               // no mountain = skip flow
+                        userName: chesterTest.name,           // name mirrored from UserProfile
+                        selectedMountain: nil
                     )
                     navigateToResult = true
                 } label: {
