@@ -1,0 +1,33 @@
+# Xcode
+#
+build/
+DerivedData/
+*.hmap
+*.ipa
+*.playground
+
+# User khusus (Layout jendela, file yang terbuka, dll)
+#
+xcuserdata/
+
+# Swift Package Manager
+#
+.build/
+.swiftpm/xcode/
+
+# CocoaPods (Jika digunakan)
+#
+# Pods/
+# *.xcworkspace
+
+# File sistem & Backup
+#
+.DS_Store
+*.swp
+*.lock
+
+# Fastlane (Jika digunakan untuk otomasi)
+#
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
