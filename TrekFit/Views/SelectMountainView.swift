@@ -6,8 +6,13 @@
 //  Displays a scrollable list of mountain cards and a bottom search bar.
 //  Navigated to after the user taps "Set Profile" on SetProfileView.
 //
+//  Navigation outcomes:
+//    - User taps "Select" on a card  → navigates to ResultView with selectedMountain set
+//    - User taps "Skip"              → navigates to ResultView with selectedMountain nil
+//    - User taps back chevron        → returns to SetProfileView
+//
 //  Layout (top → bottom):
-//    1. Navigation bar  — back chevron + "Select Mountain" title
+//    1. Navigation bar  — back chevron + "Select Mountain" title + "Skip" trailing button
 //    2. Scrollable area — one MountainCardView per filtered mountain
 //    3. Search bar      — pinned to the bottom, filters the list as the user types
 //
@@ -21,13 +26,33 @@ struct SelectMountainView: View {
     // MARK: - ViewModel
 
     /// Owns the mountain list and search filtering logic.
-    /// `@StateObject` ensures it is created once and lives as long as this view.
     @StateObject private var viewModel = SelectMountainViewModel()
 
-    // MARK: - Navigation
+    // MARK: - Injected Dependencies
+
+    /// The user's profile — name is passed into TestResult for the result screen greeting
+    let userProfile: UserProfile
+
+    /// The dummy Chester Test result — in production this comes from the test flow.
+    /// For now a static dummy is used so the result page renders correctly.
+    let chesterTest: ChesterTest
+
+    // MARK: - Navigation State
 
     /// Allows the back button to pop this view off the NavigationStack
     @Environment(\.dismiss) private var dismiss
+
+    /// Drives navigation to ResultView — set when user selects or skips
+    @State private var navigationResult: TestResult? = nil
+    @State private var navigateToResult: Bool = false
+
+    // MARK: - Init
+
+    /// Default init uses the dummy Chester test so previews and prototypes work without real data.
+    init(userProfile: UserProfile, chesterTest: ChesterTest = ChesterTest.dummy) {
+        self.userProfile = userProfile
+        self.chesterTest = chesterTest
+    }
 
     // MARK: - Body
 
@@ -42,12 +67,15 @@ struct SelectMountainView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVStack(spacing: 20) {
 
-                    // Iterate over the filtered list — updates live as searchQuery changes.
-                    // `\.id` uses Mountain's UUID so SwiftUI can diff the list efficiently.
                     ForEach(viewModel.filteredMountains) { mountain in
                         MountainCardView(mountain: mountain) {
-                            // TODO: Handle mountain selection (navigate to fitness test screen)
-                            // For now this is intentionally left empty (prototype stage)
+                            // User selected this mountain → build TestResult with it
+                            navigationResult = TestResult(
+                                userVO2Max: chesterTest.vo2max,
+                                userName: userProfile.name,
+                                selectedMountain: mountain
+                            )
+                            navigateToResult = true
                         }
                     }
 
@@ -62,20 +90,44 @@ struct SelectMountainView: View {
             searchBar
                 .padding(.horizontal, 20)
                 .padding(.bottom, 24)
+
+            // Hidden NavigationLink — activated when navigateToResult flips to true
+            if let result = navigationResult {
+                NavigationLink(
+                    destination: ResultView(result: result),
+                    isActive: $navigateToResult
+                ) { EmptyView() }
+            }
         }
         // MARK: Navigation Bar
         .navigationTitle("Select Mountain")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)        // hide default back button; we use custom
+        .navigationBarBackButtonHidden(true)
         .toolbar {
+            // Back button — returns to SetProfileView
             ToolbarItem(placement: .navigationBarLeading) {
-                // Custom back button — matches the style on SetProfileView
                 Button {
-                    dismiss()                       // pops SelectMountainView off the stack
+                    dismiss()
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.primary)
+                }
+            }
+
+            // Skip button — goes to ResultView without a mountain selected
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    navigationResult = TestResult(
+                        userVO2Max: chesterTest.vo2max,
+                        userName: userProfile.name,
+                        selectedMountain: nil               // no mountain = skip flow
+                    )
+                    navigateToResult = true
+                } label: {
+                    Text("Skip")
+                        .font(.body)
+                        .foregroundColor(Color("AccentOrange"))
                 }
             }
         }
@@ -84,21 +136,17 @@ struct SelectMountainView: View {
     // MARK: - Subviews
 
     /// The search bar pinned to the bottom of the screen.
-    /// Bound to `viewModel.searchQuery` — every character typed re-filters the list.
     private var searchBar: some View {
         HStack(spacing: 8) {
 
-            // Magnifying glass icon — SF Symbol "magnifyingglass"
             Image(systemName: "magnifyingglass")
                 .foregroundColor(Color(.systemGray))
                 .font(.system(size: 15))
 
-            // Live search text field
             TextField("Search Mountain", text: $viewModel.searchQuery)
                 .font(.body)
                 .autocorrectionDisabled()
 
-            // Clear button — only visible when the user has typed something
             if !viewModel.searchQuery.isEmpty {
                 Button {
                     viewModel.searchQuery = ""
@@ -111,7 +159,7 @@ struct SelectMountainView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color(hex: "F2F2F7"))           // light grouped background
+        .background(Color(hex: "F2F2F7"))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
@@ -120,6 +168,6 @@ struct SelectMountainView: View {
 
 #Preview {
     NavigationStack {
-        SelectMountainView()
+        SelectMountainView(userProfile: .empty)
     }
 }

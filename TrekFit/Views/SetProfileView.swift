@@ -79,7 +79,7 @@ struct SetProfileView: View {
                     // Hidden NavigationLink — activated programmatically via the bool flag.
                     // Using this pattern keeps the button UI fully custom (no default link styling).
                     NavigationLink(
-                        destination: SelectMountainView(),
+                        destination: SelectMountainView(userProfile: viewModel.draft),
                         isActive: $navigateToSelectMountain
                     ) { EmptyView() }
                 }
