@@ -70,14 +70,12 @@ struct GuideView: View {
                     .padding(.top, 24)
                     
                     // MARK: - GIF Placeholder
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(UIColor.secondarySystemBackground))
-                            .frame(height: 220)
-                        
-                        Text("GIF")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.black)
+                    VStack {
+                        LottieView(name: "gif-guide-cst") // Nama file json tanpa .json
+                            .frame(width: 350)
+                            .aspectRatio(contentMode: .fit)
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(16)
                     }
                     
                     // MARK: - Posture and Setup

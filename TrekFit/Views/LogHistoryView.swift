@@ -16,6 +16,7 @@ struct VO2MaxRecord: Identifiable {
     let durationMinutes: Int
     let durationSeconds: Int
     let vo2Max: Double
+    var mountainId: String?
 
     var formattedDate: String {
         let formatter = DateFormatter()

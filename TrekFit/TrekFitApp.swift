@@ -18,9 +18,6 @@ struct TrekFitApp: App {
             ContentView()
                 .environmentObject(measurementStore)
                 .environmentObject(profileViewModel)
-                .onAppear() {
-                    ChesterTest.injectDummyHistory()
-                }
         }
     }
 }

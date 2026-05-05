@@ -17,29 +17,34 @@ struct TestDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
 
+    // MARK: - State
+
+    @State private var selectedMountain: Mountain?
+    @State private var showMountainPicker = false
+
+    // Inisialisasi State awal berdasarkan tanggal record
+    init(record: VO2MaxRecord, initialMountain: Mountain? = nil) {
+            self.record = record
+            
+            // Jika ada initialMountain yang dipassing (dari Preview), gunakan itu
+            if let initialMountain = initialMountain {
+                _selectedMountain = State(initialValue: initialMountain)
+            } else {
+                // Jika tidak, jalankan logika normal (dari Aplikasi Asli)
+                let cal = Calendar.current
+                if cal.isDateInToday(record.date) {
+                    _selectedMountain = State(initialValue: MountainStorage.load())
+                } else {
+                    _selectedMountain = State(initialValue: nil)
+                }
+            }
+        }
+
     // MARK: - Derived State
 
-    /// Mountain untuk record ini. Hanya akurat untuk record hari ini
-    /// karena VO2MaxRecord belum menyimpan mountainId.
-    /// Untuk record lama → solo VO2 card tanpa mountain comparison.
-    private var mountain: Mountain? {
-        let cal = Calendar.current
-        guard cal.isDateInToday(record.date) else { return nil }
-        return MountainStorage.load()
-    }
-
     private var userPassesMountain: Bool {
-        guard let m = mountain else { return false }
+        guard let m = selectedMountain else { return false }
         return record.vo2Max >= m.minimumVO2Max
-    }
-
-    private var recommendedMountain: Mountain? {
-        if let m = mountain, record.vo2Max >= m.minimumVO2Max { return nil }
-        return Mountain.sampleMountains
-            .filter { $0.minimumVO2Max <= record.vo2Max }
-            .filter { $0.id != mountain?.id }
-            .sorted { abs(record.vo2Max - $0.minimumVO2Max) < abs(record.vo2Max - $1.minimumVO2Max) }
-            .first
     }
 
     private var formattedVO2: String {
@@ -47,7 +52,7 @@ struct TestDetailView: View {
     }
 
     private var shortMountainName: String {
-        mountain?.name.replacingOccurrences(of: "Mount ", with: "Mt. ") ?? ""
+        selectedMountain?.name.replacingOccurrences(of: "Mount ", with: "Mt. ") ?? ""
     }
 
     // MARK: - Body
@@ -75,41 +80,49 @@ struct TestDetailView: View {
                         }
                     }
 
-                    // 2. VO2 Cards
-                    HStack(spacing: 12) {
-                        VO2MaxCardView(
-                            style: .black,
-                            label: "Your VO₂ max",
-                            value: formattedVO2,
-                            iconName: "vo2icon",
-                            isFullWidth: mountain == nil
-                        )
-
-                        if let m = mountain {
+                    // 2. VO2 Cards + Compare Button
+                    VStack(alignment: .trailing, spacing: 12) {
+                        HStack(spacing: 12) {
+                            // User Card (Green or Red)
                             VO2MaxCardView(
-                                style: .black,
-                                label: "Est. Minimum for\n\(shortMountainName)",
-                                value: String(format: "%.1f", m.minimumVO2Max),
-                                iconName: "mountainIcon"
+                                style: selectedMountain == nil ? .black : (userPassesMountain ? .green : .red),
+                                label: "Your VO₂ max",
+                                value: formattedVO2,
+                                iconName: "vo2icon",
+                                isFullWidth: selectedMountain == nil
                             )
+                            
+                            // Mountain Card (Always Black)
+                            if let m = selectedMountain {
+                                VO2MaxCardView(
+                                    style: .black,
+                                    label: "Est. Minimum for\n\(shortMountainName)",
+                                    value: String(format: "%.1f", m.minimumVO2Max),
+                                    iconName: "mountainIcon"
+                                )
+                            }
                         }
+                        
+                        // Compare Button
+                        Button {
+                            showMountainPicker = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text("Result with another mountain")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(Color(hex: "007AFF"))
+                        }
+                        .buttonStyle(.plain)
+                        
                     }
 
                     // 3. Stage Breakdown
                     stageBreakdown
-
-                    // 4. Recommended Mountain
-                    if let rec = recommendedMountain {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("RECOMMENDED MOUNTAIN")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(.primary)
-                                .kerning(0.5)
-
-                            RecommendedMountainCard(mountain: rec)
-                        }
-                    }
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 24)
@@ -144,6 +157,32 @@ struct TestDetailView: View {
         .background(Color(.systemBackground).ignoresSafeArea())
         .navigationTitle("Test Detail")
         .navigationBarTitleDisplayMode(.inline)
+        
+        // ── MOUNTAIN PICKER SHEET ─────────────────────────────────────
+        .sheet(isPresented: $showMountainPicker) {
+            NavigationStack {
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        ForEach(Mountain.sampleMountains) { mountain in
+                            MountainCardView(mountain: mountain) {
+                                selectedMountain = mountain
+                                showMountainPicker = false
+                            }
+                        }
+                    }
+                    .padding(24)
+                }
+                .background(Color(.systemGroupedBackground).ignoresSafeArea())
+                .navigationTitle("Compare Mountain")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { showMountainPicker = false }
+                    }
+                }
+            }
+            .presentationDetents([.large])
+        }
     }
 
     // MARK: - End Reason Badge
@@ -234,17 +273,19 @@ struct TestDetailView: View {
     }
 }
 
-// MARK: - Preview
-
 #Preview("Completed — Today (with Mountain)") {
     NavigationStack {
-        TestDetailView(record: VO2MaxRecord(
-            date: Date(),
-            stage: 5,
-            durationMinutes: 10,
-            durationSeconds: 0,
-            vo2Max: 38.4
-        ))
+        TestDetailView(
+            record: VO2MaxRecord(
+                date: Date(),
+                stage: 5,
+                durationMinutes: 10,
+                durationSeconds: 0,
+                vo2Max: 38.4
+            ),
+            // Suntikkan dummy mountain agar Compare Button & Mountain Card muncul
+            initialMountain: Mountain.sampleMountains.first { $0.name == "Mount Semeru" } ?? Mountain.sampleMountains.first
+        )
     }
 }
 

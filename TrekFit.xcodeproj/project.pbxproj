@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		767B2CB52FA508CA00EB2B6B /* TrekFitWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 767B2CAB2FA508C900EB2B6B /* TrekFitWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		7693668F2FAA040600798D7F /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 7693668E2FAA040600798D7F /* Lottie */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -77,17 +78,26 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7693668F2FAA040600798D7F /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7693668D2FAA040600798D7F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		76B632732FA209030063D2A4 = {
 			isa = PBXGroup;
 			children = (
 				76B6327E2FA209030063D2A4 /* TrekFit */,
 				767B2CAC2FA508C900EB2B6B /* TrekFitWatch Watch App */,
+				7693668D2FAA040600798D7F /* Frameworks */,
 				76B6327D2FA209030063D2A4 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -145,6 +155,7 @@
 			);
 			name = TrekFit;
 			packageProductDependencies = (
+				7693668E2FAA040600798D7F /* Lottie */,
 			);
 			productName = TrekFit;
 			productReference = 76B6327C2FA209030063D2A4 /* TrekFit.app */;
@@ -177,6 +188,9 @@
 			);
 			mainGroup = 76B632732FA209030063D2A4;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				769366882FAA03A600798D7F /* XCRemoteSwiftPackageReference "lottie-spm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 76B6327D2FA209030063D2A4 /* Products */;
 			projectDirPath = "";
@@ -531,6 +545,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		769366882FAA03A600798D7F /* XCRemoteSwiftPackageReference "lottie-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7693668E2FAA040600798D7F /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 769366882FAA03A600798D7F /* XCRemoteSwiftPackageReference "lottie-spm" */;
+			productName = Lottie;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 76B632742FA209030063D2A4 /* Project object */;
 }
