@@ -11,12 +11,13 @@ import SwiftUI
 struct ConnectWatchView: View {
     @Environment(\.dismiss) private var dismiss
 
-    @State private var hrMonitor = HeartRateMonitor()
+    @StateObject private var hrMonitor = HeartRateMonitor()
     @State private var isAuthorized: Bool = false
     @State private var errorMessage: String? = nil
     @State private var navigateToGuide: Bool = false
 
     var body: some View {
+        let _ = print("Connectwatchview body rendered")
         VStack(spacing: 0) {
 
             // MARK: - Custom Navigation Bar
@@ -133,6 +134,7 @@ struct ConnectWatchView: View {
                             isAuthorized = true
                             errorMessage = nil
                             hrMonitor.startMonitoring()
+                            print("startMonitoring called")
                         } catch {
                             isAuthorized = false
                             errorMessage = error.localizedDescription
@@ -182,9 +184,7 @@ struct ConnectWatchView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 40)
-                .navigationDestination(isPresented: $navigateToGuide) {
-                    GuideView(hrMonitor: hrMonitor)
-                }
+                
             }
 
             if let errorMsg = errorMessage {
@@ -196,6 +196,9 @@ struct ConnectWatchView: View {
         }
         .background(Color.white.ignoresSafeArea())
         .navigationBarHidden(true)
+        .navigationDestination(isPresented: $navigateToGuide) {
+            GuideView(hrMonitor: hrMonitor)
+        }
     }
 }
 

@@ -39,6 +39,8 @@ struct SelectMountainView: View {
     // MARK: - Body
 
     var body: some View {
+        let _ = print("🏔️ SelectMountainView body rendered")
+        let _ = print("🏔️ navigateToWatch: \(navigateToWatch)")
         ZStack(alignment: .bottom) {
 
             Color(.systemBackground).ignoresSafeArea()
@@ -48,7 +50,7 @@ struct SelectMountainView: View {
                 LazyVStack(spacing: 20) {
                     ForEach(viewModel.filteredMountains) { mountain in
                         MountainCardView(mountain: mountain) {
-                            // Save selected mountain so ResultView can read it after the test
+                            print("🏔️ Mountain selected, navigateToWatch = true")
                             MountainStorage.save(mountain)
                             navigateToWatch = true
                         }
@@ -89,7 +91,6 @@ struct SelectMountainView: View {
                 }
             }
         }
-        // Navigate to ConnectWatchView after mountain is saved
         .navigationDestination(isPresented: $navigateToWatch) {
             ConnectWatchView()
         }
@@ -120,6 +121,7 @@ struct SelectMountainView: View {
         .background(Color(hex: "F2F2F7"))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
+    
 }
 
 // MARK: - Preview

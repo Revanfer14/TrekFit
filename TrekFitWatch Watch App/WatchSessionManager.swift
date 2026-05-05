@@ -121,11 +121,12 @@ class WatchSessionManager: NSObject, ObservableObject {
     // MARK: - Kirim HR ke iPhone
     
     private func sendHRToiPhone(_ bpm: Double) {
-        // isReachable memastikan aplikasi iPhone sedang aktif di layar
-        guard let session = wcSession, session.isReachable else {
-            print("⚠️ iPhone tidak reachable (layar mati atau app tertutup)")
-            return
-        }
+        guard let session = wcSession else { return }
+            print("📡 isReachable: \(session.isReachable)")  // ← tambah ini
+            guard session.isReachable else {
+                print("⚠️ iPhone tidak reachable")
+                return
+            }
         
         session.sendMessage(["hr": bpm], replyHandler: nil, errorHandler: { error in
             print("❌ WCSession error: \(error.localizedDescription)")

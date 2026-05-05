@@ -19,6 +19,7 @@ struct LandingView: View {
     @State private var navigateToSetProfile: Bool = false
 
     var body: some View {
+        let _ = print("🏠 LandingView rendered")
         NavigationStack {
             ZStack(alignment: .top) {
 

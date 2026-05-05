@@ -8,13 +8,13 @@
 import Foundation
 import HealthKit
 import WatchConnectivity
+import Combine
 
-@Observable
-final class HeartRateMonitor: NSObject {
+final class HeartRateMonitor: NSObject, ObservableObject {
     
-    var currentHR: Double? = nil
-    var lastReadingDate: Date? = nil
-    var isReceivingData: Bool = false
+    @Published var currentHR: Double? = nil
+    @Published var lastReadingDate: Date? = nil
+    @Published var isReceivingData: Bool = false
     
     var onHeartRateUpdate: ((Double) -> Void)?
     
@@ -23,16 +23,22 @@ final class HeartRateMonitor: NSObject {
     
     override init() {
         super.init()
+        print("HeartRateMonitor init called")
         setupWCSession()
+        print("📱 HeartRateMonitor instance created: \(ObjectIdentifier(self))")
     }
     
     // MARK: - WatchConnectivity
     
     private func setupWCSession() {
-        guard WCSession.isSupported() else { return }
+        guard WCSession.isSupported() else {
+                print("❌ WCSession not supported")
+                return
+            }
         wcSession = WCSession.default
         wcSession?.delegate = self
         wcSession?.activate()
+        print("📱 WCSession setup, state: \(WCSession.default.activationState.rawValue)")
     }
     
     // MARK: - HealthKit Auth (tetap dibutuhkan untuk baca history)
@@ -84,13 +90,14 @@ extension HeartRateMonitor: WCSessionDelegate {
     func session(_ session: WCSession,
                  activationDidCompleteWith activationState: WCSessionActivationState,
                  error: Error?) {
-        print("📱 iPhone WCSession activated: \(activationState.rawValue)")
+        print("📱 iPhone WCSession activated: \(activationState.rawValue), error: \(String(describing: error))")
     }
     
     // Terima HR message dari Watch
     func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
         guard let bpm = message["hr"] as? Double else { return }
         
+        print("💓 Received from Watch on instance: \(ObjectIdentifier(self))")
         print("💓 Received from Watch: \(bpm) bpm")
         
         DispatchQueue.main.async { [weak self] in

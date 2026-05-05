@@ -100,7 +100,7 @@ struct VO2MaxCardView: View {
 
                     // Large VO2 Max number
                     Text(value)
-                        .font(.system(size: isFullWidth ? 52 : 38, weight: .bold))
+                        .font(.system(size: isFullWidth ? 32 : 18, weight: .bold))
                         .foregroundColor(.white)
 
                     // Unit on its own line, right-aligned below the number
@@ -122,10 +122,8 @@ struct VO2MaxCardView: View {
 
 #Preview {
     VStack(spacing: 16) {
-        // Solo full-width (no mountain selected)
         VO2MaxCardView(style: .orange, label: "Your VO₂ max", value: "38.4", isFullWidth: true)
 
-        // Paired (mountain selected)
         HStack(spacing: 12) {
             VO2MaxCardView(style: .orange, label: "Your VO₂ max", value: "38.4")
             VO2MaxCardView(style: .red, label: "Est. Min. for Mt. Rinjani", value: "45.0")

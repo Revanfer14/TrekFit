@@ -10,7 +10,7 @@ import SwiftUI
 struct GuideView: View {
     @Environment(\.dismiss) private var dismiss
     
-    @State var hrMonitor: HeartRateMonitor
+    @ObservedObject var hrMonitor: HeartRateMonitor
     
     var body: some View {
         VStack(spacing: 0) {

@@ -55,6 +55,7 @@ struct SetProfileView: View {
     // MARK: - Body
 
     var body: some View {
+        let _ = print("📝 SetProfileView rendered")
         ZStack {
                 // --- Screen background: #FFFFFF (design spec) ---
                 Color(hex: "FFFFFF")

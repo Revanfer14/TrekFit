@@ -50,7 +50,7 @@ final class ChesterTestViewModel: ObservableObject {
     private static let stageWorkloads: [Double] = [11, 14, 17, 20, 23]
 
     /// Duration of each stage in seconds
-    private static let stageDuration: TimeInterval = 10
+    private static let stageDuration: TimeInterval = 120
 
     /// Stop threshold — 80% of max HR
     private static let hrThresholdRatio: Double = 0.80

@@ -140,7 +140,7 @@ struct ResultView: View {
             style: .orange,
             label: "Your VO₂ max",
             value: viewModel.formattedUserVO2Max,
-            isFullWidth: true
+            isFullWidth: false
         )
     }
 
