@@ -49,9 +49,17 @@ final class SetProfileViewModel: ObservableObject {
     /// Formatted date string shown in the Date of Birth row (e.g. "Jan 7, 2004")
     var formattedDateOfBirth: String {
         let formatter = DateFormatter()
-        formatter.dateStyle = .medium   // "Jan 7, 2004"
+        formatter.dateStyle = .medium
         formatter.timeStyle = .none
         return formatter.string(from: draft.dateOfBirth)
+    }
+
+    /// Formatted weight string shown in the Weight row (e.g. "64.50 kg")
+    /// Splits the Double into whole kg and decimal grams (0–99) for display.
+    var formattedWeight: String {
+        let kg = Int(draft.weight)
+        let grams = Int((draft.weight - Double(kg)) * 100)
+        return String(format: "%d.%02d kg", kg, grams)
     }
 
     // MARK: - Public Actions
@@ -66,13 +74,12 @@ final class SetProfileViewModel: ObservableObject {
             showValidationAlert = true
             return false
         }
-        
-        // --- Validation: Weight ---
-            guard draft.weight > 0 else {
-                validationMessage = "Please enter your body weight before saving."
-                showValidationAlert = true
-                return false
-            }
+
+        guard draft.weight > 0 else {
+            validationMessage = "Please enter your weight before saving."
+            showValidationAlert = true
+            return false
+        }
 
         // --- Persistence ---
         // Encode the Codable struct and write the raw Data to UserDefaults.

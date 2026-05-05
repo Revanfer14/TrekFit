@@ -46,6 +46,9 @@ struct SetProfileView: View {
     /// Controls visibility of the gender picker sheet
     @State private var showGenderSheet: Bool = false
 
+    /// Controls visibility of the weight picker sheet
+    @State private var showWeightSheet: Bool = false
+
     /// Tracks whether the profile was saved successfully — triggers navigation to SelectMountainView
     @State private var navigateToSelectMountain: Bool = false
 
@@ -66,22 +69,16 @@ struct SetProfileView: View {
 
                     Spacer()
 
-                    // ── Primary CTA Button ─────────────────────────────────
-                    // On successful save, flips `navigateToSelectMountain` to true,
-                    // which activates the hidden NavigationLink below.
+                    // Primary CTA Button — on successful save navigates to SelectMountainView
                     PrimaryButtonView(title: "Set Profile") {
                         let success = viewModel.saveProfile()
                         if success { navigateToSelectMountain = true }
                     }
                     .padding(.horizontal, 24)
                     .padding(.bottom, 40)
-
-                    // Hidden NavigationLink — activated programmatically via the bool flag.
-                    // Using this pattern keeps the button UI fully custom (no default link styling).
-                    NavigationLink(
-                        destination: SelectMountainView(userProfile: viewModel.draft),
-                        isActive: $navigateToSelectMountain
-                    ) { EmptyView() }
+                    .navigationDestination(isPresented: $navigateToSelectMountain) {
+                        SelectMountainView(userProfile: viewModel.draft)
+                    }
                 }
             }
             // MARK: Navigation Bar
@@ -97,6 +94,10 @@ struct SetProfileView: View {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.primary)
+                            .padding(10)
+                            .background(Color(.systemBackground))
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
                     }
                 }
             }
@@ -109,6 +110,9 @@ struct SetProfileView: View {
             }
             .sheet(isPresented: $showGenderSheet) {
                 GenderPickerSheet(gender: $viewModel.draft.gender)
+            }
+            .sheet(isPresented: $showWeightSheet) {
+                WeightPickerSheet(weight: $viewModel.draft.weight)
             }
             // MARK: Validation Alert
             .alert("Incomplete Profile", isPresented: $viewModel.showValidationAlert) {
@@ -174,6 +178,21 @@ struct SetProfileView: View {
                 ProfileRowView(
                     label: "Gender",
                     value: viewModel.draft.gender.description,
+                    showChevron: true
+                )
+            }
+            .buttonStyle(.plain)
+
+            rowDivider
+
+            // --- Row 5: Weight ---
+            // Tappable → opens WeightPickerSheet (dual wheel: kg . grams)
+            Button {
+                showWeightSheet = true
+            } label: {
+                ProfileRowView(
+                    label: "Weight (kg)",
+                    value: viewModel.draft.weight <= 0 ? "Tap to enter" : viewModel.formattedWeight,
                     showChevron: true
                 )
             }
@@ -298,6 +317,139 @@ private struct GenderPickerSheet: View {
             }
         }
         .presentationDetents([.height(260)])
+    }
+}
+
+// MARK: - WeightPickerSheet
+
+/// A bottom sheet with two side-by-side wheel pickers for weight entry.
+/// Left wheel: whole kilograms (1–250)
+/// Right wheel: decimal grams in steps of 0.5 shown as 00–99 (0, 5, 10 ... 95)
+///
+/// The two wheels combine to form a value like 64.50 kg.
+/// Binding writes directly to `UserProfile.weight: Double` on every wheel change.
+private struct WeightPickerSheet: View {
+
+    /// Two-way binding into the ViewModel's draft weight (e.g. 64.5)
+    @Binding var weight: Double
+
+    @Environment(\.dismiss) private var dismiss
+
+    // MARK: - Local wheel state
+
+    /// Whole kilogram component (e.g. 64)
+    @State private var selectedKg: Int = 50
+
+    /// Decimal component index into `decimalOptions` (e.g. index 10 = 0.50)
+    @State private var selectedDecimalIndex: Int = 0
+
+    /// Available decimal options: 0.00, 0.05, 0.10 ... 0.95
+    /// Displayed as "00", "05", "10" ... "95"
+    private let decimalOptions: [Double] = stride(from: 0.0, through: 0.95, by: 0.05).map { $0 }
+
+    /// Range of valid whole kilograms
+    private let kgRange = Array(1...250)
+
+    // MARK: - Body
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+
+                // --- Label row above the pickers ---
+                HStack {
+                    Text("kg")
+                        .font(.headline)
+                        .foregroundColor(Color(.systemGray))
+                        .frame(maxWidth: .infinity)
+
+                    Text(".")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+
+                    Text("g")
+                        .font(.headline)
+                        .foregroundColor(Color(.systemGray))
+                        .frame(maxWidth: .infinity)
+                }
+                .padding(.top, 8)
+                .padding(.horizontal, 40)
+
+                // --- Dual wheel pickers ---
+                HStack(spacing: 0) {
+
+                    // Left wheel: whole kilograms
+                    Picker("Kilograms", selection: $selectedKg) {
+                        ForEach(kgRange, id: \.self) { kg in
+                            Text("\(kg)").tag(kg)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(maxWidth: .infinity)
+                    // Update weight binding whenever kg wheel changes
+                    .onChange(of: selectedKg) { syncWeight() }
+
+                    // Dot separator
+                    Text(".")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                        .padding(.bottom, 4)
+
+                    // Right wheel: decimal grams (00, 05, 10 ... 95)
+                    Picker("Grams", selection: $selectedDecimalIndex) {
+                        ForEach(decimalOptions.indices, id: \.self) { index in
+                            // Format as two-digit string: 0.0 → "00", 0.05 → "05"
+                            Text(String(format: "%02d", Int(decimalOptions[index] * 100)))
+                                .tag(index)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(maxWidth: .infinity)
+                    .onChange(of: selectedDecimalIndex) { syncWeight() }
+                }
+                .padding(.horizontal, 16)
+            }
+            .navigationTitle("Weight (kg)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                        .foregroundColor(Color("AccentOrange"))
+                }
+            }
+            // Pre-fill wheels from the current weight value when sheet opens
+            .onAppear { loadFromWeight() }
+        }
+        .presentationDetents([.height(340)])
+    }
+
+    // MARK: - Helpers
+
+    /// Combines the two wheel values and writes the result to the weight binding.
+    /// e.g. selectedKg = 64, decimalOptions[10] = 0.50 → weight = 64.50
+    private func syncWeight() {
+        let decimal = decimalOptions[selectedDecimalIndex]
+        weight = Double(selectedKg) + decimal
+    }
+
+    /// Splits the incoming weight Double into kg and decimal wheels on appear.
+    /// e.g. weight = 64.5 → selectedKg = 64, selectedDecimalIndex = 10 (0.50)
+    private func loadFromWeight() {
+        guard weight > 0 else {
+            selectedKg = 50
+            selectedDecimalIndex = 0
+            return
+        }
+        selectedKg = min(max(Int(weight), 1), 250)
+
+        // Find the closest decimal option index
+        let decimal = weight - Double(Int(weight))
+        let closest = decimalOptions.enumerated().min(by: {
+            abs($0.element - decimal) < abs($1.element - decimal)
+        })
+        selectedDecimalIndex = closest?.offset ?? 0
     }
 }
 

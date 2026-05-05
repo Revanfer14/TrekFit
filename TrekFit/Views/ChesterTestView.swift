@@ -1,14 +1,19 @@
 //
-//  ChesterTestView2.swift
+//  ChesterTestView.swift
 //  TrekFit
 //
 //  Created by Revan Ferdinand on 04/05/26.
+//  Connected to ResultView by Axel.
+//
+//  When the test finishes (testFinished = true), this view navigates to ResultView.
+//  ResultView receives a TestResult built from:
+//    - ChesterTest loaded from UserDefaults (has real vo2max + name)
+//    - Mountain loaded from MountainStorage (the one selected before the test, or nil)
 //
 
 import SwiftUI
 
 struct ChesterTestView: View {
-
 
     @StateObject private var viewModel: ChesterTestViewModel
     @State private var showStopConfirm: Bool = false
@@ -17,12 +22,27 @@ struct ChesterTestView: View {
         _viewModel = StateObject(wrappedValue: ChesterTestViewModel(hrMonitor: hrMonitor))
     }
 
-    private var isDark: Bool          { viewModel.isDark }
-    private var bgColor: Color        { isDark ? .black             : .white }
-    private var primaryText: Color    { isDark ? .white             : .black }
-    private var trackColor: Color     { isDark ? Color(white: 0.25) : Color(hex: "E0E0E0") }
-    private var cardBg: Color         { isDark ? .white             : .black }
-    private var cardText: Color       { isDark ? .black             : .white }
+    private var isDark: Bool       { viewModel.isDark }
+    private var bgColor: Color     { isDark ? .black             : .white }
+    private var primaryText: Color { isDark ? .white             : .black }
+    private var trackColor: Color  { isDark ? Color(white: 0.25) : Color(hex: "E0E0E0") }
+    private var cardBg: Color      { isDark ? .white             : .black }
+    private var cardText: Color    { isDark ? .black             : .white }
+
+    // MARK: - Build TestResult from persisted data after test completes
+
+    /// Reads the saved ChesterTest and MountainStorage to construct a real TestResult.
+    /// Called only when testFinished becomes true.
+    private var liveTestResult: TestResult {
+        let savedTest = ChesterTest.load()
+        let mountain  = MountainStorage.load()      // nil if user skipped
+
+        return TestResult(
+            userVO2Max: savedTest?.vo2max ?? viewModel.vo2max,
+            userName:   savedTest?.name   ?? "User",
+            selectedMountain: mountain
+        )
+    }
 
     // MARK: - Body
 
@@ -72,7 +92,6 @@ struct ChesterTestView: View {
                         Capsule()
                             .fill(trackColor)
                             .frame(height: 12)
-
                         Capsule()
                             .fill(Color.orange)
                             .frame(width: geo.size.width * viewModel.hrProgress, height: 12)
@@ -96,7 +115,6 @@ struct ChesterTestView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
                         .fill(cardBg)
-
                     VStack(spacing: 4) {
                         HStack(alignment: .lastTextBaseline, spacing: 4) {
                             Text("\(Int(viewModel.hrThreshold))")
@@ -133,108 +151,18 @@ struct ChesterTestView: View {
             }
         }
         .navigationBarHidden(true)
-        .onAppear {
-            viewModel.startTest()
-        }
-        .onDisappear {
-            viewModel.stopAll()
-        }
+        .onAppear  { viewModel.startTest() }
+        .onDisappear { viewModel.stopAll() }
         .confirmationDialog("Stop Test?", isPresented: $showStopConfirm, titleVisibility: .visible) {
-            Button("Stop", role: .destructive) {
-                viewModel.manualStop()
-            }
+            Button("Stop", role: .destructive) { viewModel.manualStop() }
             Button("Continue", role: .cancel) {}
         }
+        // ── Navigate to ResultView when test finishes ─────────────────────
+        // liveTestResult reads from UserDefaults so data is always fresh.
+        // navigationBarBackButtonHidden on ResultView prevents going back to the finished test.
         .navigationDestination(isPresented: $viewModel.testFinished) {
-            // Ini nanti jadi ResultView
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            Text("Hasil Uji Sementara")
-                                .font(.largeTitle)
-                                .bold()
-                                .padding(.top, 32)
-                            
-                            // ── Card VO2 Max ──────────────────────────────────────────
-                            VStack(spacing: 8) {
-                                Text("Estimasi VO2 Max")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-                                
-                                Text(String(format: "%.1f", viewModel.vo2max))
-                                    .font(.system(size: 64, weight: .heavy, design: .rounded))
-                                    .foregroundColor(.orange)
-                                
-                                Text("ml/kg/min")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 24)
-                            .background(Color(UIColor.secondarySystemBackground))
-                            .cornerRadius(20)
-                            
-                            // ── Alasan Berhenti ───────────────────────────────────────
-                            if let reason = viewModel.stopReason {
-                                HStack {
-                                    Text("Alasan Berhenti:")
-                                        .fontWeight(.semibold)
-                                    Spacer()
-                                    Text(reason.rawValue.capitalized) // Mengambil string dari enum TestEndReason
-                                        .foregroundColor(.red)
-                                }
-                                .padding()
-                                .background(Color(UIColor.secondarySystemBackground))
-                                .cornerRadius(12)
-                            }
-                            
-                            // ── Rincian Per Stage ─────────────────────────────────────
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Rincian Stage")
-                                    .font(.title2)
-                                    .bold()
-                                    .padding(.bottom, 4)
-                                
-                                // Hanya tampilkan stage yang punya data (tidak kosong)
-                                let validStages = viewModel.stages.filter { !$0.hrReadings.isEmpty }
-                                
-                                ForEach(validStages) { stage in
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text("Stage \(stage.number)")
-                                            .font(.headline)
-                                        
-                                        HStack {
-                                            VStack(alignment: .leading) {
-                                                Text("Durasi")
-                                                    .font(.caption).foregroundColor(.secondary)
-                                                Text("\(Int(stage.duration)) dtk")
-                                                    .font(.subheadline).bold()
-                                            }
-                                            Spacer()
-                                            VStack(alignment: .center) {
-                                                Text("Avg HR")
-                                                    .font(.caption).foregroundColor(.secondary)
-                                                Text("\(Int(stage.avgHR)) bpm")
-                                                    .font(.subheadline).bold()
-                                            }
-                                            Spacer()
-                                            VStack(alignment: .trailing) {
-                                                Text("Last HR")
-                                                    .font(.caption).foregroundColor(.secondary)
-                                                Text("\(Int(stage.lastHR)) bpm")
-                                                    .font(.subheadline).bold()
-                                            }
-                                        }
-                                    }
-                                    .padding()
-                                    .background(Color(UIColor.secondarySystemBackground))
-                                    .cornerRadius(12)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 24)
-                    }
-                    .navigationBarBackButtonHidden(true) // Cegah user swipe back ke halaman tes yang sudah selesai
-                }
+            ResultView(result: liveTestResult)
+        }
     }
 }
 
