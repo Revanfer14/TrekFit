@@ -2,49 +2,32 @@
 //  ContentView.swift
 //  TrekFit
 //
-//  Created by Revan Ferdinand on 29/04/26.
+//  Root view of the app.
+//  Creates the SetProfileViewModel once here (owned for the app lifetime)
+//  and passes it down to LandingView → SetProfileView.
+//
+//  Full navigation flow:
+//    LandingView
+//      → SetProfileView
+//          → SelectMountainView          (pick or skip mountain, saved to MountainStorage)
+//              → ConnectWatchView        (pair Apple Watch)
+//                  → GuideView           (friend's screen)
+//                      → CountdownView   (friend's screen)
+//                          → ChesterTestView (friend's screen)
+//                              → ResultView  (reads ChesterTest + MountainStorage)
 //
 
 import SwiftUI
 
 struct ContentView: View {
-    
+
+    /// Created once at the root — survives the entire session.
+    /// Passed down via @ObservedObject so SetProfileView never recreates it.
     @StateObject private var profileViewModel = SetProfileViewModel()
-    
+
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                Text("Welcome to TrekFit!")
-                    .font(.largeTitle.bold())
-                
-                NavigationLink {
-                    LandingView(profileViewModel: profileViewModel)
-                } label: {
-                    Text("Landing Page")
-                        .font(.headline)
-                        .frame(maxWidth: 100)
-                        .padding()
-                        .background(Color.orange)
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-                
-                NavigationLink {
-                    ConnectWatchView()
-                } label: {
-                    Text("Connnect to Watch")
-                        .font(.headline)
-                        .frame(maxWidth: 100)
-                        .padding()
-                        .background(Color.orange)
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-                
-            }
-            .padding()
-            .navigationTitle("TrekFit")
-        }
+        // LandingView owns the NavigationStack for the whole onboarding + test flow.
+        LandingView(profileViewModel: profileViewModel)
     }
 }
 
