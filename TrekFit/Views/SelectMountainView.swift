@@ -3,7 +3,7 @@ import SwiftUI
 struct SelectMountainView: View {
     let userProfile: UserProfile
     @Environment(\.dismiss) private var dismiss
-    @State private var navigateToWatch: Bool = false
+    @State private var navigateToMeasure: Bool = false
 
     var body: some View {
         ZStack {
@@ -24,7 +24,7 @@ struct SelectMountainView: View {
                         ForEach(Mountain.sampleMountains) { mountain in
                             MountainCardView(mountain: mountain) {
                                 MountainStorage.save(mountain)
-                                navigateToWatch = true
+                                navigateToMeasure = true
                             }
                         }
                     }
@@ -46,8 +46,8 @@ struct SelectMountainView: View {
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    MountainStorage.save(nil) // Skip flow
-                    navigateToWatch = true
+                    MountainStorage.save(nil)   // persist "no mountain" explicitly
+                    navigateToMeasure = true
                 } label: {
                     Text("Skip")
                         .font(.body)
@@ -55,8 +55,8 @@ struct SelectMountainView: View {
                 }
             }
         }
-        .navigationDestination(isPresented: $navigateToWatch) {
-            ConnectWatchView()
+        .navigationDestination(isPresented: $navigateToMeasure) {
+            MeasureBoxView()
         }
     }
 }
