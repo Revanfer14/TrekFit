@@ -9,7 +9,6 @@
 import SwiftUI
 
 struct ConnectWatchView: View {
-    @EnvironmentObject var profileVM: SetProfileViewModel
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var hrMonitor = HeartRateMonitor()
@@ -18,11 +17,6 @@ struct ConnectWatchView: View {
     @State private var navigateToGuide: Bool = false
 
     var body: some View {
-        // HOW TO: Access box height data
-        if let profile = SetProfileViewModel.loadProfile() {
-            let boxHeight = profile.boxHeight
-        }
-        
         VStack(spacing: 0) {
 
             // MARK: - Custom Navigation Bar

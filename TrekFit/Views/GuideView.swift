@@ -15,7 +15,6 @@ struct GuideView: View {
     var body: some View {
         VStack(spacing: 0) {
             
-            // MARK: - Custom Navigation Bar
             HStack {
                 Button(action: {
                     dismiss()
@@ -57,7 +56,6 @@ struct GuideView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 20) {
                     
-                    // MARK: - Header
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Chester Step Test")
                             .font(.system(size: 32, weight: .bold))
@@ -69,16 +67,14 @@ struct GuideView: View {
                     }
                     .padding(.top, 24)
                     
-                    // MARK: - GIF Placeholder
                     VStack {
-                        LottieView(name: "gif-guide-cst") // Nama file json tanpa .json
-                            .frame(width: 350)
+                        LottieView(name: "gif-guide-cst")
+                            .frame(width: 350, height: 350)
                             .aspectRatio(contentMode: .fit)
                             .background(Color(UIColor.secondarySystemBackground))
                             .cornerRadius(16)
                     }
                     
-                    // MARK: - Posture and Setup
                     Text("Posture and Setup")
                         .font(.system(size: 22, weight: .bold))
                         .padding(.top, 8)
@@ -112,7 +108,6 @@ struct GuideView: View {
                 .padding(.horizontal, 24)
             }
             
-            // MARK: - Bottom Button (Dynamic State)
             VStack {
                 NavigationLink(destination: CircleLoadingView(hrMonitor: hrMonitor)) {
                     HStack(spacing: 12) {
