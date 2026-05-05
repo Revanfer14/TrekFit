@@ -43,11 +43,8 @@ struct UserProfile: Codable {
     /// The user's body weight in kilograms, stored as a Double (e.g. 64.50)
     /// Used in the Chester Step Test for VO2 Max calculation.
     var weight: Double
-
-    // MARK: Computed Properties
-
-    /// Calculates the user's current age in whole years from `dateOfBirth` to today.
-    /// Computed on the fly so it always reflects the current date.
+    var boxHeight: Double
+    
     var age: Int {
         Calendar.current.dateComponents([.year], from: dateOfBirth, to: Date()).year ?? 0
     }
@@ -61,7 +58,8 @@ struct UserProfile: Codable {
             name: "",
             dateOfBirth: Calendar.current.date(byAdding: .year, value: -22, to: Date()) ?? Date(),
             gender: .male,
-            weight: 0.0
+            weight: 0.0,
+            boxHeight: 0.20
         )
     }
 }

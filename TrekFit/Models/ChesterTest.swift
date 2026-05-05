@@ -2,12 +2,7 @@
 //  ChesterTest.swift
 //  TrekFit
 //
-//  Model: ChesterTest & StageResult
-//  Plain Codable structs stored in UserDefaults — no SwiftData needed.
-//  For the Result page, only `vo2max: Double` is consumed.
-//
-//  User profile fields (name, age, gender) are pulled directly from UserProfile
-//  and stored here so the test session is self-contained for logging purposes.
+//  Created by Revan Ferdinand on 04/05/26.
 //
 
 import Foundation
@@ -21,11 +16,10 @@ struct StageResult: Codable {
         guard !heartRateReadings.isEmpty else { return 0 }
         return heartRateReadings.reduce(0, +) / Double(heartRateReadings.count)
     }
-    
+        
     var lastHeartRate: Double {
         heartRateReadings.last ?? 0
     }
-
 }
 
 enum TestEndReason: String, Codable {

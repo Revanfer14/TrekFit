@@ -59,6 +59,7 @@ final class ChesterTestViewModel: ObservableObject {
 
     private let userAge: Int
     private let userWeight: Double
+    private let userBoxHeight: Double
     let maxHR: Double
     let hrThreshold: Double          // 80% of maxHR
 
@@ -88,19 +89,25 @@ final class ChesterTestViewModel: ObservableObject {
         let profile = ChesterTestViewModel.loadProfile()
         self.userAge    = profile?.age    ?? 25
         self.userWeight = profile?.weight ?? 70.0
+        self.userBoxHeight  = profile?.boxHeight ?? 0.20
 
         // Derived HR values
         self.maxHR      = Double(220 - (profile?.age ?? 25))
         self.hrThreshold = maxHR * ChesterTestViewModel.hrThresholdRatio
         
-        let stageData: [(workload: Double, bpm: Int)] = [
-                (11, 60), (14, 80), (17, 100), (20, 120), (23, 140)
-            ]
+        let cyclesPerMin: [Double] = [15, 20, 25, 30, 35]
+        
+        let weight = profile?.weight     ?? 70.0
+        let stepH  = profile?.boxHeight ?? 0.20
         
         // Build 5 stages
-        self.stages = stageData.enumerated().map { idx, data in
-                TestStage(id: idx, number: idx + 1, workload: data.workload, bpm: data.bpm) // <-- Masukkan data.bpm
-            }
+        self.stages = cyclesPerMin.enumerated().map { idx, cycles in
+            let spm = cycles * 4
+            
+            let workload = spm * stepH * weight * 1.33
+            
+            return TestStage(id: idx, number: idx + 1, workload: workload, bpm: Int(spm))
+        }
     }
 
     // MARK: - Computed Helpers
@@ -251,6 +258,16 @@ final class ChesterTestViewModel: ObservableObject {
 
     private func calculateVO2Max() -> Double {
         let completedStages = stages.filter { !$0.hrReadings.isEmpty }
+        
+        print("=== DATA HEART RATE PER STAGE ===")
+                for stage in completedStages {
+                    // Asumsi properti nomer stage-nya adalah 'number' atau 'stageNumber'
+                    print("Stage \(stage.number) - Total Data: \(stage.hrReadings.count)")
+                    print("Array HR: \(stage.hrReadings)")
+                    print("Avg HR: \(stage.avgHR)")
+                    print("---------------------------------")
+                }
+        
         guard completedStages.count >= 2 else { return 0 }
 
         // Kumpulkan pasangan (workload, avgHR) dari setiap stage

@@ -80,22 +80,18 @@ struct GuideView: View {
                             .foregroundColor(.black)
                     }
                     
-                    // Step Info
-                    HStack(spacing: 12) {
-                        Image(systemName: "figure.step.training")
-                            .font(.system(size: 20))
-                        Text("Step up and down in 4 counts.")
-                            .font(.system(size: 16))
-                    }
-                    .padding(.vertical, 8)
-                    .foregroundColor(Color.black)
-                    
                     // MARK: - Posture and Setup
                     Text("Posture and Setup")
                         .font(.system(size: 22, weight: .bold))
                         .padding(.top, 8)
                     
                     VStack(spacing: 16) {
+                        InstructionCard(
+                            icon: "figure.step.training",
+                            title: "Main Objective",
+                            description: "Step up and down in 4 counts."
+                        )
+                        
                         InstructionCard(
                             icon: "figure.walk",
                             title: "Maintain Upright Torso",
