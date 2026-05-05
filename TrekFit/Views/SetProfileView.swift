@@ -52,6 +52,9 @@ struct SetProfileView: View {
     /// Tracks whether the profile was saved successfully — triggers navigation to SelectMountainView
     @State private var navigateToSelectMountain: Bool = false
     
+    /// Menentukan apakah view ini dibuka sebagai form Onboarding atau Edit Profil
+    var isEditMode: Bool = false
+    
     // MARK: - Body
     
     var body: some View {
@@ -70,7 +73,6 @@ struct SetProfileView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 24)
                 
-                
                 // ── Form Card ──────────────────────────────────────────
                 formCard
                     .padding(.horizontal, 20)
@@ -78,30 +80,37 @@ struct SetProfileView: View {
                 
                 Spacer()
                 
-                // Primary CTA Button — on successful save navigates to SelectMountainView
-                PrimaryButtonView(title: "Set Profile") {
-                    let success = viewModel.saveProfile()
-                    if success { navigateToSelectMountain = true }
-                }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 40)
-                .navigationDestination(isPresented: $navigateToSelectMountain) {
-                    SelectMountainView(userProfile: viewModel.draft)
+                // MARK: CTA Button & Navigation
+                // Hanya tampilkan tombol CTA bagian bawah jika BUKAN dalam mode edit
+                if !isEditMode {
+                    // Primary CTA Button — on successful save navigates to SelectMountainView
+                    PrimaryButtonView(title: "Set Profile") {
+                        let success = viewModel.saveProfile()
+                        if success { navigateToSelectMountain = true }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 40)
+                    .navigationDestination(isPresented: $navigateToSelectMountain) {
+                        SelectMountainView(userProfile: viewModel.draft)
+                    }
                 }
             }
         }
         // MARK: Navigation Bar
-        .navigationTitle("Set Profile")
+        .navigationTitle(isEditMode ? "Edit Profile" : "Set Profile") // Opsional: Judul dinamis
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 // Back button — returns to LandingView by popping this view off the stack
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .medium))
+                // Sembunyikan ikon back (<) jika sedang dalam mode Edit/Sheet
+                if !isEditMode {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .medium))
+                    }
                 }
             }
         }

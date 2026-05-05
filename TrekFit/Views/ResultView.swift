@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ResultView: View {
     @StateObject private var viewModel: ResultViewModel
+    @State private var navigateToHistory: Bool = false
     
     init(result: TestResult) {
         _viewModel = StateObject(wrappedValue: ResultViewModel(result: result))
@@ -97,7 +98,10 @@ struct ResultView: View {
                     .padding(.horizontal, 32)
                 
                 Button(action: {
-                    // Save Data Log Action
+                    if let savedTest = ChesterTest.load() {
+                        savedTest.saveToHistory()
+                    }
+                    navigateToHistory = true
                 }) {
                     Text("Save Data Log")
                         .font(.headline)
@@ -117,8 +121,10 @@ struct ResultView: View {
         .background(Color(.systemBackground).ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .navigationBarHidden(true)
+        .navigationDestination(isPresented: $navigateToHistory) {
+                    HistoryLogView()
+                }
         .sheet(isPresented: $viewModel.showMountainPicker) {
-            // Reusing the SelectMountain style for the bottom sheet
             NavigationStack {
                 ScrollView {
                     LazyVStack(spacing: 16) {

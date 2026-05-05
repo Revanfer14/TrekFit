@@ -16,7 +16,7 @@ struct StageResult: Codable {
         guard !heartRateReadings.isEmpty else { return 0 }
         return heartRateReadings.reduce(0, +) / Double(heartRateReadings.count)
     }
-        
+    
     var lastHeartRate: Double {
         heartRateReadings.last ?? 0
     }
@@ -29,7 +29,7 @@ enum TestEndReason: String, Codable {
 }
 
 struct ChesterTest: Codable {
-
+    
     var name: String
     var age: Int
     var gender: String
@@ -40,7 +40,6 @@ struct ChesterTest: Codable {
     var targetHr: Double
     var endReason: TestEndReason
     
-
     init(from profile: UserProfile, testDate: Date = .now) {
         self.name = profile.name
         self.age = profile.age
@@ -54,34 +53,49 @@ struct ChesterTest: Codable {
     }
 }
 
-// MARK: - UserDefaults Persistence
+// MARK: - UserDefaults Persistence (Latest Test)
 
 extension ChesterTest {
-
+    
     private static let storageKey = "saved_chester_test"
-
-    /// Saves this test result to UserDefaults.
+    private static let historyKey = "chester_test_history"
+    
+    /// Saves this test as the latest result (single record)
     func save() {
         if let encoded = try? JSONEncoder().encode(self) {
             UserDefaults.standard.set(encoded, forKey: ChesterTest.storageKey)
         }
     }
-
-    /// Loads the last saved test from UserDefaults, or returns nil if none exists.
+    
+    /// Loads the last saved test, or nil if none exists
     static func load() -> ChesterTest? {
         guard let data = UserDefaults.standard.data(forKey: storageKey) else { return nil }
         return try? JSONDecoder().decode(ChesterTest.self, from: data)
+    }
+    
+    /// Saves this test to the history array (newest first)
+    func saveToHistory() {
+        var history = ChesterTest.loadHistory()
+        history.insert(self, at: 0)
+        if let encoded = try? JSONEncoder().encode(history) {
+            UserDefaults.standard.set(encoded, forKey: ChesterTest.historyKey)
+        }
+    }
+    
+    /// Loads all saved history records
+    static func loadHistory() -> [ChesterTest] {
+        guard let data = UserDefaults.standard.data(forKey: historyKey),
+              let history = try? JSONDecoder().decode([ChesterTest].self, from: data)
+        else { return [] }
+        return history
     }
 }
 
 // MARK: - Dummy Data
 
 extension ChesterTest {
-
-    /// Pre-filled dummy used for previews and prototype navigation.
-    /// vo2max 38.4 sits between Gede (35.0) and Rinjani (45.0) to demo both pass/fail states.
+    
     static var dummy: ChesterTest {
-        // Build from a dummy profile so the init stays consistent
         var test = ChesterTest(from: .empty, testDate: .now)
         test.name = "Axel"
         test.age = 21
@@ -94,5 +108,56 @@ extension ChesterTest {
         ]
         test.endReason = .completed
         return test
+    }
+}
+
+// MARK: - Debug Helpers
+
+extension ChesterTest {
+    
+    static func injectDummyHistory() {
+        
+        let existingHistory = ChesterTest.loadHistory()
+        
+        // 2. Jika history masih kosong, baru kita suntik data dummy
+        guard existingHistory.isEmpty else {
+            print("⏭️ History sudah ada isinya, suntikan dummy dibatalkan.")
+            return
+        }
+        
+        let cal = Calendar.current
+        let today = Date()
+        
+        func daysAgo(_ n: Int) -> Date {
+            cal.date(byAdding: .day, value: -n, to: today) ?? today
+        }
+        
+        var history: [ChesterTest] = []
+        
+        var t1 = ChesterTest.dummy
+        t1.testDate = today
+        t1.vo2max = 38.4
+        t1.name = "Revan"
+        history.append(t1)
+        
+        var t2 = ChesterTest.dummy
+        t2.testDate = daysAgo(1)
+        t2.vo2max = 37.1
+        history.append(t2)
+        
+        var t3 = ChesterTest.dummy
+        t3.testDate = daysAgo(3)
+        t3.vo2max = 36.8
+        history.append(t3)
+        
+        var t4 = ChesterTest.dummy
+        t4.testDate = daysAgo(8)
+        t4.vo2max = 35.5
+        history.append(t4)
+        
+        if let encoded = try? JSONEncoder().encode(history) {
+            UserDefaults.standard.set(encoded, forKey: "chester_test_history")
+            print("✅ Dummy history injected: \(history.count) records")
+        }
     }
 }

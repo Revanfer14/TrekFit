@@ -44,11 +44,6 @@ final class ChesterTestViewModel: ObservableObject {
     // MARK: - Dark mode toggle (background flips on beat)
     @Published var isDark: Bool = false
 
-    // MARK: - Constants
-
-    /// Workload (ml/kg/min) per stage for a 20cm step, per Sykes protocol
-    private static let stageWorkloads: [Double] = [11, 14, 17, 20, 23]
-
     /// Duration of each stage in seconds
     private static let stageDuration: TimeInterval = 120
 
@@ -102,11 +97,12 @@ final class ChesterTestViewModel: ObservableObject {
         
         // Build 5 stages
         self.stages = cyclesPerMin.enumerated().map { idx, cycles in
-            let spm = cycles * 4
+            let bpm = cycles * 4 // Ini untuk suara metronom (60, 80, 100, dst)
+            let stepsPerMin = cycles // Ini untuk rumus beban kerja (15, 20, 25, 30, 35)
             
-            let workload = (0.2 * spm) + (1.33 * 1.8 * stepH * spm) + 3.5
-            
-            return TestStage(id: idx, number: idx + 1, workload: workload, bpm: Int(spm))
+            // Gunakan stepsPerMin (bukan bpm) untuk menghitung workload
+            let workload = (0.2 * stepsPerMin) + (1.33 * 1.8 * stepH * stepsPerMin) + 3.5
+            return TestStage(id: idx, number: idx + 1, workload: workload, bpm: Int(bpm))
         }
     }
 
@@ -116,7 +112,7 @@ final class ChesterTestViewModel: ObservableObject {
 
     /// HR as a fraction of maxHR (0.0 – 1.0), clamped for the progress bar
     var hrProgress: Double {
-        min(currentHR / maxHR, 1.0)
+        min(currentHR / hrThreshold, 1.0)
     }
 
     // MARK: - Public API
@@ -234,11 +230,13 @@ final class ChesterTestViewModel: ObservableObject {
 
     private func finishTest(reason: TestEndReason) {
         guard !testFinished else { return }
-        stopAll()
+
         stopReason = reason
 
         stages[currentStageIndex].duration = stageElapsed
 
+        stopAll()
+        
         vo2max = calculateVO2Max()
         
         saveTestToUserDefaults()
@@ -311,7 +309,9 @@ final class ChesterTestViewModel: ObservableObject {
         var test = ChesterTest(from: profile)
         
         // 2. Petakan array 'TestStage' (UI Model) menjadi 'StageResult' (Data Model)
-        test.stageResults = stages.map { stage in
+        test.stageResults = stages
+            .filter {!$0.hrReadings.isEmpty}
+            .map { stage in
             StageResult(
                 stageNumber: stage.number,
                 duration: stage.duration,

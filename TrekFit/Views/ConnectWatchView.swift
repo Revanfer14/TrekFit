@@ -21,7 +21,6 @@ struct ConnectWatchView: View {
         // HOW TO: Access box height data
         if let profile = SetProfileViewModel.loadProfile() {
             let boxHeight = profile.boxHeight
-            let _ = print("Box height: \(boxHeight)")
         }
         
         VStack(spacing: 0) {
@@ -178,7 +177,7 @@ struct ConnectWatchView: View {
                 .padding(.bottom, 40)
 
             } else {
-                // State 3: HR detected → go to GuideView (friend's screen)
+                // State 3: HR detected → go to GuideView
                 Button { navigateToGuide = true } label: {
                     Text("Continue")
                         .font(.system(size: 18, weight: .semibold))

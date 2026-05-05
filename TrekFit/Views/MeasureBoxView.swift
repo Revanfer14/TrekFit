@@ -105,7 +105,7 @@ struct MeasureBoxView: View {
         
         // MeasurementStore stores in cm (e.g. 30)
         // UserProfile.boxHeight stores in meters (e.g. 0.30)
-        let measuredHeight = store.stepHeight
+        let measuredHeight = store.stepHeight * 0.01
         
         // Save to UserProfile via ViewModel
         profileVM.updateBoxHeight(measuredHeight)
