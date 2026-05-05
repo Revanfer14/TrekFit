@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "mountainIcon.png",
+      "filename" : "mountainIcon.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "mountainIcon 1.png",
+      "filename" : "mountainIcon 1.svg",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "mountainIcon 2.png",
+      "filename" : "mountainIcon 2.svg",
       "idiom" : "universal",
       "scale" : "3x"
     }
