@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "vo2icon.svg",
+      "filename" : "routeIcon.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "vo2icon 1.svg",
+      "filename" : "routeIcon 1.svg",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "vo2icon 2.svg",
+      "filename" : "routeIcon 2.svg",
       "idiom" : "universal",
       "scale" : "3x"
     }
