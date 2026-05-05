@@ -34,13 +34,13 @@ struct SelectMountainView: View {
     // MARK: - Navigation State
 
     @Environment(\.dismiss) private var dismiss
-    @State private var navigateToWatch: Bool = false
+    @State private var navigateToMeasure: Bool = false
 
     // MARK: - Body
 
     var body: some View {
         let _ = print("🏔️ SelectMountainView body rendered")
-        let _ = print("🏔️ navigateToWatch: \(navigateToWatch)")
+        let _ = print("🏔️ navigateToMeasure: \(navigateToMeasure)")
         ZStack(alignment: .bottom) {
 
             Color(.systemBackground).ignoresSafeArea()
@@ -50,9 +50,9 @@ struct SelectMountainView: View {
                 LazyVStack(spacing: 20) {
                     ForEach(viewModel.filteredMountains) { mountain in
                         MountainCardView(mountain: mountain) {
-                            print("🏔️ Mountain selected, navigateToWatch = true")
+                            print("🏔️ Mountain selected, navigateToMeasure = true")
                             MountainStorage.save(mountain)
-                            navigateToWatch = true
+                            navigateToMeasure = true
                         }
                     }
                     Spacer().frame(height: 80)
@@ -83,7 +83,7 @@ struct SelectMountainView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     MountainStorage.save(nil)   // persist "no mountain" explicitly
-                    navigateToWatch = true
+                    navigateToMeasure = true
                 } label: {
                     Text("Skip")
                         .font(.body)
@@ -91,8 +91,8 @@ struct SelectMountainView: View {
                 }
             }
         }
-        .navigationDestination(isPresented: $navigateToWatch) {
-            ConnectWatchView()
+        .navigationDestination(isPresented: $navigateToMeasure) {
+            MeasureBoxView()
         }
     }
 

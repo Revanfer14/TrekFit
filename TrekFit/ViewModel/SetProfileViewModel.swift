@@ -9,6 +9,7 @@
 //    2. Validate the form before saving
 //    3. Persist the profile to UserDefaults when the user taps "Set Profile"
 //    4. Load any previously saved profile on launch
+//    5. Update boxHeight from MeasureBoxView
 //
 
 import Foundation
@@ -17,36 +18,31 @@ import Combine
 // MARK: - SetProfileViewModel
 
 /// ObservableObject so SwiftUI views can subscribe and re-render on changes.
+/// Shared across the app via @EnvironmentObject so MeasureBoxView can update boxHeight.
 final class SetProfileViewModel: ObservableObject {
-
     // MARK: - Published State
-
     /// The live draft of the profile being edited in the form.
-    /// Every field change in the view updates this object.
     @Published var draft: UserProfile
 
-    /// Controls whether a validation alert is shown (e.g. name is empty)
     @Published var showValidationAlert: Bool = false
-
-    /// The message shown inside the validation alert
     @Published var validationMessage: String = ""
 
     // MARK: - Constants
-
-    /// UserDefaults key used to store / retrieve the encoded UserProfile
-    private let storageKey = "saved_user_profile"
+    /// UserDefaults key — diubah jadi static biar bisa diakses dari luar
+    static let storageKey = "saved_user_profile"
 
     // MARK: - Init
 
-    /// Initialises the ViewModel by loading any previously saved profile.
-    /// Falls back to an empty profile if nothing has been saved yet.
     init() {
-        self.draft = SetProfileViewModel.loadProfile(key: "saved_user_profile") ?? .empty
+        self.draft = SetProfileViewModel.loadProfile() ?? .empty
     }
 
     // MARK: - Computed Helpers
+    /// The currently saved profile (not draft). Useful for views that need the persisted data.
+    var savedProfile: UserProfile {
+        SetProfileViewModel.loadProfile() ?? .empty
+    }
 
-    /// Formatted date string shown in the Date of Birth row (e.g. "Jan 7, 2004")
     var formattedDateOfBirth: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -54,8 +50,6 @@ final class SetProfileViewModel: ObservableObject {
         return formatter.string(from: draft.dateOfBirth)
     }
 
-    /// Formatted weight string shown in the Weight row (e.g. "64.50 kg")
-    /// Splits the Double into whole kg and decimal grams (0–99) for display.
     var formattedWeight: String {
         let kg = Int(draft.weight)
         let grams = Int((draft.weight - Double(kg)) * 100)
@@ -64,11 +58,8 @@ final class SetProfileViewModel: ObservableObject {
 
     // MARK: - Public Actions
 
-    /// Validates and saves the profile.
-    /// - Returns: `true` if save succeeded, `false` if validation failed.
     @discardableResult
     func saveProfile() -> Bool {
-        // --- Validation ---
         guard !draft.name.trimmingCharacters(in: .whitespaces).isEmpty else {
             validationMessage = "Please enter your name before saving."
             showValidationAlert = true
@@ -81,13 +72,30 @@ final class SetProfileViewModel: ObservableObject {
             return false
         }
 
-        // --- Persistence ---
-        // Encode the Codable struct and write the raw Data to UserDefaults.
-        // This is appropriate for a prototype; a production app would use a
-        // proper data layer (e.g. SwiftData / Core Data).
+        return persistProfile(draft)
+    }
+
+    /// - Parameter heightInMeters: Tinggi box dalam meter (e.g. 0.30 untuk 30 cm)
+    func updateBoxHeight(_ heightInMeters: Double) {
+        // Load profile yang sudah tersimpan (atau pakai draft kalau belum ada)
+        var profileToUpdate = SetProfileViewModel.loadProfile() ?? draft
+
+        // Update field boxHeight saja
+        profileToUpdate.boxHeight = heightInMeters
+
+        // Simpan ke UserDefaults
+        if persistProfile(profileToUpdate) {
+            // Sync draft juga biar form di SetProfileView tetap up-to-date
+            draft.boxHeight = heightInMeters
+        }
+    }
+
+    // MARK: - Private Helpers
+    @discardableResult
+    private func persistProfile(_ profile: UserProfile) -> Bool {
         do {
-            let encoded = try JSONEncoder().encode(draft)
-            UserDefaults.standard.set(encoded, forKey: storageKey)
+            let encoded = try JSONEncoder().encode(profile)
+            UserDefaults.standard.set(encoded, forKey: Self.storageKey)
             return true
         } catch {
             validationMessage = "Failed to save profile. Please try again."
@@ -96,12 +104,8 @@ final class SetProfileViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Private Helpers
-
-    /// Attempts to decode a UserProfile from UserDefaults for the given key.
-    /// Returns `nil` if no data exists or decoding fails.
-    private static func loadProfile(key: String) -> UserProfile? {
-        guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
+    static func loadProfile() -> UserProfile? {
+        guard let data = UserDefaults.standard.data(forKey: storageKey) else { return nil }
         return try? JSONDecoder().decode(UserProfile.self, from: data)
     }
 }
