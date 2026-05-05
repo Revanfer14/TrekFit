@@ -24,7 +24,7 @@ struct SelectMountainView: View {
                         ForEach(Mountain.sampleMountains) { mountain in
                             MountainCardView(mountain: mountain) {
                                 MountainStorage.save(mountain)
-                                navigateToWatch = true
+                                navigateToMeasure = true
                             }
                         }
                     }
