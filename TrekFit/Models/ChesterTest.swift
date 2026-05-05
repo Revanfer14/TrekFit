@@ -86,7 +86,7 @@ extension ChesterTest {
         test.name = "Axel"
         test.age = 21
         test.gender = Gender.male.rawValue
-        test.vo2max = 38.4
+        test.vo2max = 30.0
         test.stageResults = [
             StageResult(stageNumber: 1, duration: 120, heartRateReadings: [105, 108, 112, 115]),
             StageResult(stageNumber: 2, duration: 120, heartRateReadings: [120, 125, 128, 130]),

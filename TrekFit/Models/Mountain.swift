@@ -14,12 +14,12 @@ extension Mountain {
         Mountain(
             name: "Mount Prau",
             route: "via Patak Banteng",
-            minimumVO2Max: 35.0
+            minimumVO2Max: 25.6
         ),
         Mountain(
             name: "Mount Gede",
             route: "via Cibodas",
-            minimumVO2Max: 37.6
+            minimumVO2Max: 33.6
         ),
         Mountain(
             name: "Mount Semeru",
