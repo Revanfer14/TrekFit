@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "vo2Icon.png",
+      "filename" : "vo2icon.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "vo2Icon 1.png",
+      "filename" : "vo2icon 1.svg",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "vo2Icon 2.png",
+      "filename" : "vo2icon 2.svg",
       "idiom" : "universal",
       "scale" : "3x"
     }
