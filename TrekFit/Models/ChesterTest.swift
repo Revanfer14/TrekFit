@@ -53,27 +53,29 @@ struct ChesterTest: Codable {
     }
 }
 
-// MARK: - UserDefaults Persistence (Latest Test)
+// Buat simpen data ke UserDefaults
+// Intinya, karena struct ChesterTest ini object bikinan sendiri, UserDefaults gak ngerti, jadi harus Encode dulu jadi JSON
+// nah, kalau mau ambil (load), tinggal Decode JSON yang hasil encode tadi (JSON -> object ChesterTest).
 
 extension ChesterTest {
     
     private static let storageKey = "saved_chester_test"
     private static let historyKey = "chester_test_history"
     
-    /// Saves this test as the latest result (single record)
+    // Saves this test as the latest result (single record)
     func save() {
         if let encoded = try? JSONEncoder().encode(self) {
             UserDefaults.standard.set(encoded, forKey: ChesterTest.storageKey)
         }
     }
     
-    /// Loads the last saved test, or nil if none exists
+    // Loads the last saved test, or nil if none exists
     static func load() -> ChesterTest? {
         guard let data = UserDefaults.standard.data(forKey: storageKey) else { return nil }
         return try? JSONDecoder().decode(ChesterTest.self, from: data)
     }
     
-    /// Saves this test to the history array (newest first)
+    // Saves this test to the history array (newest first)
     func saveToHistory() {
         var history = ChesterTest.loadHistory()
         history.insert(self, at: 0)
@@ -82,7 +84,7 @@ extension ChesterTest {
         }
     }
     
-    /// Loads all saved history records
+    // Loads all saved history records
     static func loadHistory() -> [ChesterTest] {
         guard let data = UserDefaults.standard.data(forKey: historyKey),
               let history = try? JSONDecoder().decode([ChesterTest].self, from: data)
@@ -91,13 +93,13 @@ extension ChesterTest {
     }
 }
 
-// MARK: - Dummy Data
+// Dummy data
 
 extension ChesterTest {
     
     static var dummy: ChesterTest {
         var test = ChesterTest(from: .empty, testDate: .now)
-        test.name = "Axel"
+        test.name = "Revan"
         test.age = 21
         test.gender = Gender.male.rawValue
         test.vo2max = 30.0
@@ -111,7 +113,7 @@ extension ChesterTest {
     }
 }
 
-// MARK: - Debug Helpers
+// Buat inject data (testing purposes)
 
 extension ChesterTest {
     
@@ -119,9 +121,8 @@ extension ChesterTest {
         
         let existingHistory = ChesterTest.loadHistory()
         
-        // 2. Jika history masih kosong, baru kita suntik data dummy
         guard existingHistory.isEmpty else {
-            print("⏭️ History sudah ada isinya, suntikan dummy dibatalkan.")
+            print("History sudah ada isinya, gajadi inject data dummy.")
             return
         }
         
@@ -157,7 +158,7 @@ extension ChesterTest {
         
         if let encoded = try? JSONEncoder().encode(history) {
             UserDefaults.standard.set(encoded, forKey: "chester_test_history")
-            print("✅ Dummy history injected: \(history.count) records")
+            print("Dummy history injected: \(history.count) records")
         }
     }
 }

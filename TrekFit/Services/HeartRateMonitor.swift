@@ -21,6 +21,8 @@ final class HeartRateMonitor: NSObject, ObservableObject {
     private var wcSession: WCSession?
     private var stalenessTimer: Timer?
     
+    // Singleton - dipanggil sekali doang buat initialize object
+    
     override init() {
         super.init()
         print("HeartRateMonitor init called")
@@ -28,7 +30,7 @@ final class HeartRateMonitor: NSObject, ObservableObject {
         print("📱 HeartRateMonitor instance created: \(ObjectIdentifier(self))")
     }
     
-    // MARK: - WatchConnectivity
+    // Setup buat iphone ke apple watch pake WatchConnectivity supaya ip bisa dapet HR dari watch
     
     private func setupWCSession() {
         guard WCSession.isSupported() else {
@@ -41,7 +43,7 @@ final class HeartRateMonitor: NSObject, ObservableObject {
         print("📱 WCSession setup, state: \(WCSession.default.activationState.rawValue)")
     }
     
-    // MARK: - HealthKit Auth (tetap dibutuhkan untuk baca history)
+    // Buat request access (ke Health) supaya bisa dapet real time HR
     
     func requestAuthorization() async throws {
         guard HKHealthStore.isHealthDataAvailable() else {
@@ -52,7 +54,7 @@ final class HeartRateMonitor: NSObject, ObservableObject {
         try await healthStore.requestAuthorization(toShare: [], read: [hrType])
     }
     
-    // MARK: - Start / Stop
+    // Buat start dan stop monitoring real time HR
     
     func startMonitoring() {
         startStalenessCheck()
@@ -65,7 +67,7 @@ final class HeartRateMonitor: NSObject, ObservableObject {
         isReceivingData = false
     }
     
-    // MARK: - Staleness Check
+    // Buat selalu ngecek apakah ada data HR masuk atau ga (detect watch)
     
     private func startStalenessCheck() {
         stalenessTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
@@ -84,16 +86,20 @@ final class HeartRateMonitor: NSObject, ObservableObject {
     }
 }
 
-// MARK: - WCSessionDelegate
+// Split responsibility -> Hal2 berkaitan dengan watch disini
 
 extension HeartRateMonitor: WCSessionDelegate {
+    
+    // Flag buat ngasih tau Ip ke Watch udah connected or fail
+    
     func session(_ session: WCSession,
                  activationDidCompleteWith activationState: WCSessionActivationState,
                  error: Error?) {
         print("📱 iPhone WCSession activated: \(activationState.rawValue), error: \(String(describing: error))")
     }
     
-    // Terima HR message dari Watch
+    // Dapetin data real time HR dari Watch -> setiap watch kirim HR, function ini jalan
+    
     func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
         guard let bpm = message["hr"] as? Double else { return }
         
@@ -108,13 +114,16 @@ extension HeartRateMonitor: WCSessionDelegate {
         }
     }
     
+    // Buat flag kalo session lama bakal diganti (tapi in this case gak perlu, karena ga gonta ganti watch) kalo diapus error :D
     func sessionDidBecomeInactive(_ session: WCSession) {}
+    
+    // Buat activate session baru, kalau session lama mati
     func sessionDidDeactivate(_ session: WCSession) {
         session.activate()
     }
 }
 
-// MARK: - Errors
+// Label buat error message
 
 enum HRError: LocalizedError {
     case healthKitNotAvailable

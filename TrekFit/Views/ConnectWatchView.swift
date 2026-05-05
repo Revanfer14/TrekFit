@@ -3,7 +3,6 @@
 //  TrekFit
 //
 //  Created by Revan Ferdinand on 01/05/26.
-//  Back button updated to dismiss() so it returns to SelectMountainView correctly.
 //
 
 import SwiftUI
@@ -12,6 +11,7 @@ struct ConnectWatchView: View {
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var hrMonitor = HeartRateMonitor()
+    
     @State private var isAuthorized: Bool = false
     @State private var errorMessage: String? = nil
     @State private var navigateToGuide: Bool = false
@@ -19,9 +19,7 @@ struct ConnectWatchView: View {
     var body: some View {
         VStack(spacing: 0) {
 
-            // MARK: - Custom Navigation Bar
             HStack {
-                // Back button — dismisses back to SelectMountainView
                 Button(action: { dismiss() }) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .semibold))
@@ -43,7 +41,6 @@ struct ConnectWatchView: View {
 
             Spacer()
 
-            // MARK: - Main Card
             VStack(spacing: 24) {
                 Text(hrMonitor.isReceivingData ? "Apple Watch Connected" : "Apple Watch not Connected")
                     .font(.system(size: 25, weight: .bold))
@@ -123,7 +120,6 @@ struct ConnectWatchView: View {
 
             Spacer()
 
-            // MARK: - Bottom Button (3 states)
             if !isAuthorized {
                 // State 1: request HealthKit permission
                 Button(action: {

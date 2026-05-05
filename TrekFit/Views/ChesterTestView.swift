@@ -3,12 +3,6 @@
 //  TrekFit
 //
 //  Created by Revan Ferdinand on 04/05/26.
-//  Connected to ResultView by Axel.
-//
-//  When the test finishes (testFinished = true), this view navigates to ResultView.
-//  ResultView receives a TestResult built from:
-//    - ChesterTest loaded from UserDefaults (has real vo2max + name)
-//    - Mountain loaded from MountainStorage (the one selected before the test, or nil)
 //
 
 import SwiftUI
@@ -18,6 +12,7 @@ struct ChesterTestView: View {
     @StateObject private var viewModel: ChesterTestViewModel
     @State private var showStopConfirm: Bool = false
 
+    // Inject hrMonitor yg udh ada ke viewModel
     init(hrMonitor: HeartRateMonitor) {
         _viewModel = StateObject(wrappedValue: ChesterTestViewModel(hrMonitor: hrMonitor))
     }
@@ -29,13 +24,11 @@ struct ChesterTestView: View {
     private var cardBg: Color      { isDark ? .white             : .black }
     private var cardText: Color    { isDark ? .black             : .white }
 
-    // MARK: - Build TestResult from persisted data after test completes
 
-    /// Reads the saved ChesterTest and MountainStorage to construct a real TestResult.
-    /// Called only when testFinished becomes true.
+    // Bikin object TestResult buat dipass ke ResultView
     private var liveTestResult: TestResult {
         let savedTest = ChesterTest.load()
-        let mountain  = MountainStorage.load()      // nil if user skipped
+        let mountain  = MountainStorage.load()
 
         return TestResult(
             userVO2Max: savedTest?.vo2max ?? viewModel.vo2max,
@@ -44,7 +37,6 @@ struct ChesterTestView: View {
         )
     }
 
-    // MARK: - Body
 
     var body: some View {
         ZStack {
@@ -56,21 +48,18 @@ struct ChesterTestView: View {
 
                 Spacer()
 
-                // ── Elapsed time ──────────────────────────────────────────
                 Text(viewModel.elapsedString)
                     .font(.system(size: 36, weight: .bold, design: .monospaced))
                     .foregroundColor(primaryText)
                     .padding(.horizontal, 32)
                     .animation(.none, value: viewModel.elapsedString)
 
-                // ── Stage label ───────────────────────────────────────────
                 Text("Stage \(viewModel.currentStage.number) / \(viewModel.stages.count)")
                     .font(.system(size: 40, weight: .bold))
                     .foregroundColor(primaryText)
                     .padding(.horizontal, 32)
                     .padding(.top, 4)
 
-                // ── Live BPM ──────────────────────────────────────────────
                 HStack(alignment: .lastTextBaseline, spacing: 6) {
                     Text("\(Int(viewModel.currentHR))")
                         .font(.system(size: 80, weight: .bold))
@@ -86,7 +75,7 @@ struct ChesterTestView: View {
                 .padding(.horizontal, 32)
                 .padding(.top, 8)
 
-                // ── HR progress bar ───────────────────────────────────────
+                // Progress bar
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule()
@@ -102,8 +91,7 @@ struct ChesterTestView: View {
                 .padding(.horizontal, 32)
                 .padding(.top, 20)
 
-                // ── % of Max HR ───────────────────────────────────────────
-                Text(String(format: "%.0f%% of Max HR", viewModel.hrProgress * 100))
+                Text(String(format: "%.0f%% of Max HR Threshold", viewModel.hrProgress * 100))
                     .font(.system(size: 22, weight: .medium))
                     .foregroundColor(primaryText)
                     .padding(.horizontal, 32)
@@ -111,7 +99,7 @@ struct ChesterTestView: View {
 
                 Spacer()
 
-                // ── Heart Rate Threshold card ─────────────────────────────
+
                 ZStack {
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
                         .fill(cardBg)
@@ -134,7 +122,7 @@ struct ChesterTestView: View {
                 .padding(.horizontal, 32)
                 .padding(.bottom, 16)
 
-                // ── Stop button ───────────────────────────────────────────
+
                 Button {
                     showStopConfirm = true
                 } label: {
@@ -157,16 +145,12 @@ struct ChesterTestView: View {
             Button("Stop", role: .destructive) { viewModel.manualStop() }
             Button("Continue", role: .cancel) {}
         }
-        // ── Navigate to ResultView when test finishes ─────────────────────
-        // liveTestResult reads from UserDefaults so data is always fresh.
-        // navigationBarBackButtonHidden on ResultView prevents going back to the finished test.
         .navigationDestination(isPresented: $viewModel.testFinished) {
             ResultView(result: liveTestResult)
         }
     }
 }
 
-// MARK: - Preview
 
 #Preview {
     ChesterTestView(hrMonitor: HeartRateMonitor())

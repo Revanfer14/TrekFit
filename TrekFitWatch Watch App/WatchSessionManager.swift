@@ -29,7 +29,7 @@ class WatchSessionManager: NSObject, ObservableObject {
         setupWCSession()
     }
     
-    // MARK: - WatchConnectivity Setup
+    // WatchConnectivity Setup
     
     private func setupWCSession() {
         guard WCSession.isSupported() else { return }
@@ -38,7 +38,7 @@ class WatchSessionManager: NSObject, ObservableObject {
         wcSession?.activate()
     }
     
-    // MARK: - HealthKit Authorization
+    // HealthKit Authorization
     
     func requestAuthorization() async {
         let typesToShare: Set = [HKObjectType.workoutType()]
@@ -47,7 +47,7 @@ class WatchSessionManager: NSObject, ObservableObject {
         try? await healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead)
     }
     
-    // MARK: - Start / Stop Workout Session
+    // Start / Stop Workout Session
     
     func startWorkout() async {        
         await requestAuthorization()
@@ -87,7 +87,7 @@ class WatchSessionManager: NSObject, ObservableObject {
     func stopWorkout() async {
         workoutSession?.end()
         try? await builder?.endCollection(at: Date())
-        try? await builder?.finishWorkout()
+        _ = try? await builder?.finishWorkout()
         
         DispatchQueue.main.async {
             self.isRunning = false
@@ -96,8 +96,7 @@ class WatchSessionManager: NSObject, ObservableObject {
         }
     }
     
-    // MARK: - Timer Logic (1 Detik)
-    
+    // Kirim data per 1 detik supaya watch selalu detected ketika lagi aktif
     private func startPushingDataEverySecond() {
         heartRateTimer?.invalidate()
         
@@ -105,7 +104,6 @@ class WatchSessionManager: NSObject, ObservableObject {
         heartRateTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             
-            // Cegah pengiriman nilai 0 jika sensor belum mendapat bacaan pertama
             guard self.currentHR > 0 else { return }
             
             self.sendHRToiPhone(self.currentHR)
@@ -118,11 +116,10 @@ class WatchSessionManager: NSObject, ObservableObject {
         heartRateTimer = nil
     }
     
-    // MARK: - Kirim HR ke iPhone
     
     private func sendHRToiPhone(_ bpm: Double) {
         guard let session = wcSession else { return }
-            print("📡 isReachable: \(session.isReachable)")  // ← tambah ini
+            print("📡 isReachable: \(session.isReachable)")
             guard session.isReachable else {
                 print("⚠️ iPhone tidak reachable")
                 return
@@ -134,8 +131,8 @@ class WatchSessionManager: NSObject, ObservableObject {
     }
 }
 
-// MARK: - HKWorkoutSessionDelegate
 
+// Buat track state (Running, Stopped, Error) dari workout
 extension WatchSessionManager: HKWorkoutSessionDelegate {
     func workoutSession(_ session: HKWorkoutSession,
                         didChangeTo toState: HKWorkoutSessionState,
@@ -149,8 +146,7 @@ extension WatchSessionManager: HKWorkoutSessionDelegate {
     }
 }
 
-// MARK: - HKLiveWorkoutBuilderDelegate
-
+// Buat ambil data heart rate secara real time
 extension WatchSessionManager: HKLiveWorkoutBuilderDelegate {
     func workoutBuilder(_ workoutBuilder: HKLiveWorkoutBuilder,
                         didCollectDataOf collectedTypes: Set<HKSampleType>) {
@@ -164,7 +160,6 @@ extension WatchSessionManager: HKLiveWorkoutBuilderDelegate {
         
         let bpm = latestValue.doubleValue(for: HKUnit(from: "count/min"))
         
-        // HANYA UPDATE NILAI LOKAL. JANGAN PUSH KE iPHONE DARI SINI.
         DispatchQueue.main.async {
             self.currentHR = bpm
             print("💓 Sensor Updated: \(bpm) bpm")
@@ -174,8 +169,7 @@ extension WatchSessionManager: HKLiveWorkoutBuilderDelegate {
     func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {}
 }
 
-// MARK: - WCSessionDelegate
-
+// Handle connection dari watch ke iphone
 extension WatchSessionManager: WCSessionDelegate {
     func session(_ session: WCSession,
                  activationDidCompleteWith activationState: WCSessionActivationState,
