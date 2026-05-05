@@ -2,11 +2,11 @@ import SwiftUI
 
 struct MountainCardView: View {
     let mountain: Mountain
-    let onSelect: () -> Void
-
+    let onSelect: () -> Void // takes no input, and return void
+    
     var body: some View {
         Button(action: onSelect) {
-            HStack(alignment: .center) {
+            HStack() {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(mountain.name)
                         .font(.title3)
@@ -14,10 +14,7 @@ struct MountainCardView: View {
                         .foregroundColor(.primary)
                     
                     HStack(spacing: 6) {
-                        Image("routeIcon") // Make sure this is in your Assets.xcassets
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 16, height: 16)
+                        Image("routeIcon")
                         
                         Text(mountain.route)
                             .font(.subheadline)
@@ -36,6 +33,24 @@ struct MountainCardView: View {
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         }
-        .buttonStyle(.plain)
+    }
+}
+
+#Preview {
+    ZStack {
+        Color(.systemGroupedBackground).ignoresSafeArea()
+        
+        // Feed dummy mountain
+        MountainCardView(
+            mountain: Mountain(
+                name: "Mount Prau",
+                route: "via Patak Banteng",
+                minimumVO2Max: 35.0
+            ),
+            onSelect: {
+                print("Mountain card tapped!")
+            }
+        )
+        .padding()
     }
 }

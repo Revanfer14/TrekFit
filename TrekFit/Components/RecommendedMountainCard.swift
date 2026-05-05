@@ -5,7 +5,6 @@ struct RecommendedMountainCard: View {
 
     var body: some View {
         HStack(alignment: .center) {
-            // Left: Mountain Name
             Text(mountain.name)
                 .font(.title3)
                 .fontWeight(.bold)
@@ -13,7 +12,6 @@ struct RecommendedMountainCard: View {
             
             Spacer()
             
-            // Right: Icon + VStack(Route, VO2)
             HStack(spacing: 8) {
                 Image("routeIcon")
                     .resizable()
@@ -35,5 +33,20 @@ struct RecommendedMountainCard: View {
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
+    }
+}
+
+#Preview {
+    ZStack {
+        Color(.systemGroupedBackground).ignoresSafeArea()
+        
+        RecommendedMountainCard(
+            mountain: Mountain(
+                name: "Mount Gede",
+                route: "via Cibodas",
+                minimumVO2Max: 37.6
+            )
+        )
+        .padding()
     }
 }
