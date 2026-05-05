@@ -17,7 +17,6 @@ struct ConnectWatchView: View {
     @State private var navigateToGuide: Bool = false
 
     var body: some View {
-        let _ = print("Connectwatchview body rendered")
         VStack(spacing: 0) {
 
             // MARK: - Custom Navigation Bar

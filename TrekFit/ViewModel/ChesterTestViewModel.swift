@@ -104,7 +104,7 @@ final class ChesterTestViewModel: ObservableObject {
         self.stages = cyclesPerMin.enumerated().map { idx, cycles in
             let spm = cycles * 4
             
-            let workload = spm * stepH * weight * 1.33
+            let workload = (0.2 * spm) + (1.33 * 1.8 * stepH * spm) + 3.5
             
             return TestStage(id: idx, number: idx + 1, workload: workload, bpm: Int(spm))
         }
@@ -259,14 +259,18 @@ final class ChesterTestViewModel: ObservableObject {
     private func calculateVO2Max() -> Double {
         let completedStages = stages.filter { !$0.hrReadings.isEmpty }
         
-        print("=== DATA HEART RATE PER STAGE ===")
-                for stage in completedStages {
-                    // Asumsi properti nomer stage-nya adalah 'number' atau 'stageNumber'
-                    print("Stage \(stage.number) - Total Data: \(stage.hrReadings.count)")
-                    print("Array HR: \(stage.hrReadings)")
-                    print("Avg HR: \(stage.avgHR)")
-                    print("---------------------------------")
-                }
+        print("=== VO2MAX CALCULATION DEBUG ===")
+        print("👤 Age: \(userAge), Weight: \(userWeight)kg, BoxHeight: \(userBoxHeight)m")
+        print("❤️ MaxHR: \(maxHR), HRThreshold: \(hrThreshold)")
+        print("📊 Completed stages: \(completedStages.count)")
+        
+        for stage in completedStages {
+            print("--- Stage \(stage.number) ---")
+            print("   Workload: \(stage.workload)")
+            print("   BPM setting: \(stage.bpm)")
+            print("   HR Readings (\(stage.hrReadings.count)): \(stage.hrReadings)")
+            print("   Avg HR: \(stage.avgHR)")
+        }
         
         guard completedStages.count >= 2 else { return 0 }
 
@@ -287,7 +291,10 @@ final class ChesterTestViewModel: ObservableObject {
         // Balik rumusnya: kita tahu maxHR, cari workload-nya
         // maxHR = a + b × vo2max  →  vo2max = (maxHR - a) / b
         guard b > 0 else { return 0 }
-        return max(0, (maxHR - a) / b)
+        
+        let result = max(0, (maxHR - a) / b)
+        print("Result VO2Max: \(result) ml/kg/min")
+        return result
     }
 
     // MARK: - Persistence Helper
