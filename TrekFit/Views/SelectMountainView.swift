@@ -4,11 +4,11 @@ struct SelectMountainView: View {
     let userProfile: UserProfile
     @Environment(\.dismiss) private var dismiss
     @State private var navigateToMeasure: Bool = false
-
+    
     var body: some View {
         ZStack {
             Color(.systemBackground).ignoresSafeArea()
-
+            
             VStack(alignment: .leading, spacing: 0) {
                 // Instructions Text
                 Text("Select the mountain you plan to hike to find out the required VO₂ max.")
@@ -17,7 +17,7 @@ struct SelectMountainView: View {
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
                     .padding(.bottom, 24)
-
+                
                 // Cards list
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack(spacing: 16) {

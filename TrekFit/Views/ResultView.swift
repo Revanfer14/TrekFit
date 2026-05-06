@@ -9,10 +9,7 @@ struct ResultView: View {
     }
     
     var body: some View {
-        // Main VStack to separate the scrolling content from the pinned button
         VStack(spacing: 0) {
-            
-            // SCROLLING CONTENT
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
                     
@@ -36,7 +33,7 @@ struct ResultView: View {
                                 style: viewModel.userCardStyle,
                                 label: "Your VO₂ max",
                                 value: viewModel.formattedUserVO2Max,
-                                iconName: "vo2icon", // Set this up in your assets
+                                iconName: "vo2icon",
                                 isFullWidth: !viewModel.isMountainSelected
                             )
                             
@@ -46,7 +43,7 @@ struct ResultView: View {
                                     style: .black,
                                     label: "Est. Minimum for\n\(viewModel.shortMountainName)",
                                     value: viewModel.formattedMountainVO2Max,
-                                    iconName: "mountainIcon" // Set this up in your assets
+                                    iconName: "mountainIcon"
                                 )
                             }
                         }
@@ -88,7 +85,7 @@ struct ResultView: View {
                 .padding(.bottom, 24)
             }
             
-            // 4. PINNED BOTTOM SECTION (Outside the ScrollView)
+            // 4. PINNED BOTTOM SECTION (Outside ScrollView)
             VStack(spacing: 16) {
                 Text("These results only reflect your aerobic capacity for trekking, not full hiking readiness")
                     .font(.caption)
@@ -116,14 +113,14 @@ struct ResultView: View {
             .padding(.horizontal, 24)
             .padding(.top, 16)
             .padding(.bottom, 40)
-            .background(Color(.systemBackground)) // Prevents scrolling content from bleeding behind it
+            .background(Color(.systemBackground))
         }
         .background(Color(.systemBackground).ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .navigationBarHidden(true)
         .navigationDestination(isPresented: $navigateToHistory) {
-                    HistoryLogView()
-                }
+            HistoryLogView()
+        }
         .sheet(isPresented: $viewModel.showMountainPicker) {
             NavigationStack {
                 ScrollView {
@@ -149,8 +146,6 @@ struct ResultView: View {
         }
     }
 }
-
-
 
 #Preview("37.0 VO2 - Fails Semeru (38.4)") {
     let dummyTest = ChesterTest.dummy
