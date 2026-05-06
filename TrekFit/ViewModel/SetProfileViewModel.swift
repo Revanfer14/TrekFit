@@ -1,29 +1,11 @@
-//
-//  SetProfileViewModel.swift
-//  TrekFit
-//
-//  ViewModel: SetProfileViewModel
 //  Sits between SetProfileView and the UserProfile model.
-//  Responsibilities:
-//    1. Hold the draft profile the user is editing (reactive via @Published)
-//    2. Validate the form before saving
-//    3. Persist the profile to UserDefaults when the user taps "Set Profile"
-//    4. Load any previously saved profile on launch
-//    5. Update boxHeight from MeasureBoxView
-//
 
 import Foundation
 import Combine
 
 // MARK: - SetProfileViewModel
-
-/// ObservableObject so SwiftUI views can subscribe and re-render on changes.
-/// Shared across the app via @EnvironmentObject so MeasureBoxView can update boxHeight.
 final class SetProfileViewModel: ObservableObject {
-    // MARK: - Published State
-    /// The live draft of the profile being edited in the form.
     @Published var draft: UserProfile
-
     @Published var showValidationAlert: Bool = false
     @Published var validationMessage: String = ""
 
@@ -31,14 +13,11 @@ final class SetProfileViewModel: ObservableObject {
     /// UserDefaults key — diubah jadi static biar bisa diakses dari luar
     static let storageKey = "saved_user_profile"
 
-    // MARK: - Init
-
     init() {
         self.draft = SetProfileViewModel.loadProfile() ?? .empty
     }
 
-    // MARK: - Computed Helpers
-    /// The currently saved profile (not draft). Useful for views that need the persisted data.
+    // Helpers
     var savedProfile: UserProfile {
         SetProfileViewModel.loadProfile() ?? .empty
     }
@@ -57,7 +36,7 @@ final class SetProfileViewModel: ObservableObject {
     }
 
     // MARK: - Public Actions
-
+    // Sekarang validasi cuman ada di bagian name dan weight
     @discardableResult
     func saveProfile() -> Bool {
         guard !draft.name.trimmingCharacters(in: .whitespaces).isEmpty else {

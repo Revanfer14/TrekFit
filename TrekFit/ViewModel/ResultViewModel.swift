@@ -4,9 +4,10 @@ import Combine
 final class ResultViewModel: ObservableObject {
     let result: TestResult
     let allMountains: [Mountain]
-
+    
+    // published works as to notify changes to the view
     @Published var currentSelectedMountain: Mountain?
-    @Published var showMountainPicker: Bool = false
+    @Published var showMountainPicker: Bool = false // for mountain choose pop-up
 
     init(result: TestResult, allMountains: [Mountain] = Mountain.sampleMountains) {
         self.result = result
@@ -29,7 +30,6 @@ final class ResultViewModel: ObservableObject {
     var isMountainSelected: Bool { currentSelectedMountain != nil }
 
     // MARK: - Color Logic
-    
     /// User VO2 card color: Green if passed OR skipped. Red if failed.
     var userCardStyle: VO2MaxCardView.CardStyle {
         guard let mountain = currentSelectedMountain else { return .green }
@@ -37,9 +37,7 @@ final class ResultViewModel: ObservableObject {
     }
 
     // MARK: - Recommendation Logic
-    
     var recommendedMountain: Mountain? {
-        // Use the updated logic inside TestResult
         let current = TestResult(
             userVO2Max: result.userVO2Max,
             userName: result.userName,
